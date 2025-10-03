@@ -2,29 +2,35 @@
 {% block content %}
 <h3 class="mb-3">{{ title }}</h3>
 <div class="d-flex flex-wrap toolbar-gap mb-3">
-  <a class="btn btn-primary" href="#">➕ Добавить сотрудника</a>
-  <a class="btn btn-outline-primary" href="#">⬆ Импорт</a>
+  <a class="btn btn-primary" href="{{ url_for('employees.add') }}">➕ Добавить сотрудника</a>
+  <a class="btn btn-outline-primary" href="{{ url_for('employees.import_view') }}">⬆ Импорт</a>
   <a class="btn btn-outline-primary" href="{{ url_for('employees.export_csv') }}">⬇ Экспорт</a>
-  <button class="btn btn-outline-secondary">⚙ Колонки</button>
+  <button class="btn btn-outline-secondary" disabled>⚙ Колонки</button>
 </div>
 <div class="card">
   <div class="table-responsive">
     <table class="table align-middle mb-0 table-zebra">
       <thead class="text-secondary">
-        <tr>
-          <th>ФИО</th><th>Должность</th><th>Подразделение</th><th>Телефон</th><th>Статус</th><th>Доступ</th><th>Действия</th>
-        </tr>
+        <tr><th>ФИО</th><th>Должность</th><th>Подразделение</th><th>Телефон</th><th>Статус</th><th>Доступ</th><th>Действия</th></tr>
       </thead>
       <tbody>
         {% for row in rows %}
         <tr>
-          <td>{{ row.fio }}</td>
+          <td><a href="{{ url_for('employees.show', emp_id=row.id) }}">{{ row.fio }}</a></td>
           <td>{{ row.position }}</td>
           <td>{{ row.dept }}</td>
           <td>{{ row.phone }}</td>
           <td><span class="status-pill {% if row.status=='Активен' %}status-active{% elif row.status=='Ограничен' %}status-limited{% else %}status-arch{% endif %}">{{ row.status }}</span></td>
           <td>{{ row.access }}</td>
-          <td><span class="action-chip"><a href="#">Открыть</a></span> <span class="action-chip"><a href="#">Редакт.</a></span></td>
+          <td>
+            <span class="action-chip"><a href="{{ url_for('employees.show', emp_id=row.id) }}">Открыть</a></span>
+            <span class="action-chip"><a href="{{ url_for('employees.edit', emp_id=row.id) }}">Редакт.</a></span>
+            {% if row.status != 'Архив' %}
+              <span class="action-chip"><a href="{{ url_for('employees.archive', emp_id=row.id) }}">Удалить</a></span>
+            {% else %}
+              <span class="action-chip"><a href="{{ url_for('employees.restore', emp_id=row.id) }}">Восст.</a></span>
+            {% endif %}
+          </td>
         </tr>
         {% endfor %}
       </tbody>
