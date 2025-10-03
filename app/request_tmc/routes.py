@@ -35,7 +35,7 @@ def index():
             return " ".join(parts).lower()
         rows=[r for r in rows if q in hay(r)]
     if status: rows=[r for r in rows if r.get("status")==status]
-    return render_template("tmc_req_index.html", title="Заявки на ТМЦ", rows=rows, STATUSES=STATUSES)
+    return render_template("tmc_req_index.html", title="Заявки на ТМЦ", rows=rows, STATUSES=STATUSES, employees=EMPLOYEES)
 
 @request_tmc_bp.get("/new")
 def new():
