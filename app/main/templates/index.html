@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-4">{{ title }}</h3>
+<ul class="nav nav-tabs mb-3">
+  {% for label, href in tabs %}
+    <li class="nav-item"><a class="nav-link" href="{{ href }}">{{ label }}</a></li>
+  {% endfor %}
+</ul>
+<div class="card"><div class="card-body">
+  <p class="mb-0">Выберите вкладку: «Сотрудники», «Пропускной режим» или «Кабинет участка».</p>
+</div></div>
+{% endblock %}
