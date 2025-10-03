@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+
+<div class="card mb-3">
+  <div class="card-body d-flex flex-wrap align-items-end gap-3">
+    <div>
+      <label class="form-label mb-1">Поиск</label>
+      <form class="d-flex" method="get" action="{{ url_for('norms.index') }}">
+        <input class="form-control me-2" style="min-width:280px" name="q" value="{{ request.args.get('q','') }}" placeholder="Код / наименование...">
+        <select class="form-select me-2" name="unit" style="max-width:120px">
+          <option value="">Ед. изм.</option>
+          {% for u in ['т','шт','м','м³','ч'] %}<option value="{{u}}" {{ 'selected' if request.args.get('unit')==u else '' }}>{{u}}</option>{% endfor %}
+        </select>
+        <select class="form-select me-2" name="status" style="max-width:160px">
+          {% for s in ['','Активен','Ограничен','Архив'] %}<option value="{{s}}" {{ 'selected' if request.args.get('status')==s else '' }}>{{ s or 'Статус' }}</option>{% endfor %}
+        </select>
+        <button class="btn btn-outline-secondary">Фильтр</button>
+      </form>
+    </div>
+    <div class="ms-auto d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{{ url_for('norms.add') }}">➕ Добавить</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('norms.template_xlsx') }}">📄 Шаблон XLSX</a>
+      <form method="post" action="{{ url_for('norms.import_post') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0">Импорт:</label>
+        <input type="file" name="file" class="form-control" accept=".xlsx,.csv" required style="max-width:260px">
+        <button class="btn btn-outline-success">⬆ Импорт</button>
+      </form>
+      <a class="btn btn-outline-primary" href="{{ url_for('norms.export_xlsx', **request.args) }}">⬇ Экспорт XLSX</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('norms.export_csv', **request.args) }}">⬇ Экспорт CSV</a>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Код</th>
+          <th>Наименование операции</th>
+          <th>Ед.</th>
+          <th>Норма</th>
+          <th>Расценка</th>
+          <th>Ед. расц.</th>
+          <th>Дата ввода</th>
+          <th>Статус</th>
+          <th class="text-nowrap">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.code }}</td>
+          <td>{{ r.name }}</td>
+          <td>{{ r.unit }}</td>
+          <td>{{ '%.3f'|format(r.norm|float) }}</td>
+          <td>{{ '%.2f'|format(r.rate|float) }}</td>
+          <td>{{ r.rate_unit }}</td>
+          <td>{{ r.start_date }}</td>
+          <td>
+            <span class="badge {% if r.status=='Активен' %}bg-success{% elif r.status=='Ограничен' %}bg-warning text-dark{% elif r.status=='Архив' %}bg-secondary{% else %}bg-light text-dark{% endif %}">
+              {{ r.status }}
+            </span>
+          </td>
+          <td class="text-nowrap">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('norms.edit', rid=r.id) }}">Редакт.</a>
+            {% if r.status != 'Архив' %}
+              <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('norms.archive', rid=r.id) }}">Архив</a>
+            {% else %}
+              <a class="btn btn-sm btn-outline-danger" href="{{ url_for('norms.delete', rid=r.id) }}">Удалить</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if rows|length == 0 %}
+        <tr><td colspan="9" class="text-center text-secondary py-4">Нет записей</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body d-flex justify-content-between">
+    <div class="text-secondary">Показано {{ rows|length }} из {{ total }} • Стр. {{ page }}</div>
+    <div>
+      <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('norms.index') }}">1</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
