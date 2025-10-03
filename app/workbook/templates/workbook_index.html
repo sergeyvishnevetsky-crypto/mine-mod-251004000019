@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+
+<div class="card mb-3">
+  <div class="card-body d-flex flex-wrap align-items-end gap-3">
+    <form class="d-flex flex-wrap gap-2 align-items-end" method="get" action="{{ url_for('workbook.index') }}">
+      <div>
+        <label class="form-label mb-1">Дата</label>
+        <input type="date" class="form-control" name="date" value="{{ flt.date }}">
+      </div>
+      <div>
+        <label class="form-label mb-1">Участок</label>
+        <input class="form-control" name="site" value="{{ flt.site }}">
+      </div>
+      <div>
+        <label class="form-label mb-1">Бригада</label>
+        <input class="form-control" name="brigade" value="{{ flt.brigade }}">
+      </div>
+      <div>
+        <label class="form-label mb-1">Смена</label>
+        <select class="form-select" name="shift">
+          {% for s in shifts %}<option value="{{s}}" {{ 'selected' if flt.shift==s else '' }}>{{ s }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-outline-secondary">Показать</button>
+    </form>
+
+    <div class="ms-auto d-flex flex-wrap gap-2">
+      <form method="post" action="{{ url_for('workbook.copy_plan_to_fact', **flt) }}">
+        <button class="btn btn-outline-primary">⟲ Скопировать план→факт</button>
+      </form>
+
+      <a class="btn btn-outline-primary" href="{{ url_for('workbook.template_plan', **flt) }}">📄 Шаблон плана (XLSX/CSV)</a>
+      <form method="post" action="{{ url_for('workbook.import_plan', **flt) }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0">Импорт плана:</label>
+        <input type="file" name="file" class="form-control" accept=".xlsx,.csv" required style="max-width:260px">
+        <button class="btn btn-outline-success">⬆ Импорт</button>
+      </form>
+      <a class="btn btn-outline-primary" href="{{ url_for('workbook.export_csv', **flt) }}">⬇ Экспорт CSV</a>
+    </div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form class="row g-2" method="post" action="{{ url_for('workbook.add_row', **flt) }}">
+      <div class="col-md-3">
+        <label class="form-label">Сотрудник</label>
+        <select class="form-select" name="employee_id" required>
+          {% for e in employees %}<option value="{{e.id}}">{{ e.tab_no }} — {{ e.name }} ({{ e.role }})</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Вид работ (норма)</label>
+        <select class="form-select" name="norm_id" required>
+          {% for n in norms %}<option value="{{n.id}}">{{ n.code }} — {{ n.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2"><label class="form-label">План, кол-во</label><input type="number" step="0.001" class="form-control" name="qty_plan" value="0"></div>
+      <div class="col-md-2"><label class="form-label">Факт, кол-во</label><input type="number" step="0.001" class="form-control" name="qty_fact" value="0"></div>
+      <div class="col-md-2"><label class="form-label">Примечание</label><input class="form-control" name="note"></div>
+      <div class="col-12"><button class="btn btn-primary">➕ Добавить строку</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Сотр.</th><th>Должн.</th><th>Код</th><th>Вид работ</th><th>Ед.</th><th>Норма</th>
+          <th>План, кол-во</th><th>План, сумма</th><th>Факт, кол-во</th><th>Факт, сумма</th><th>Отклон.</th><th>Прим.</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        {% set e = (employees | selectattr('id','equalto',r.employee_id) | list | first) %}
+        {% set n = (norms | selectattr('id','equalto',r.norm_id) | list | first) %}
+        <tr>
+          <td>{{ e.name }}</td>
+          <td>{{ e.role }}</td>
+          <td>{{ n.code }}</td>
+          <td>{{ n.name }}</td>
+          <td>{{ r.unit }}</td>
+          <td>{{ '%.3f'|format(r.norm|float) }}</td>
+          <td>{{ '%.3f'|format(r.qty_plan|float) }}</td>
+          <td>{{ '%.2f'|format(r.sum_plan|float) }}</td>
+          <td>{{ '%.3f'|format(r.qty_fact|float) }}</td>
+          <td>{{ '%.2f'|format(r.sum_fact|float) }}</td>
+          {% set dev = (r.qty_fact|float) - (r.qty_plan|float) %}
+          <td class="{{ 'text-success' if dev>=0 else 'text-danger' }}">{{ '%+.3f'|format(dev) }}</td>
+          <td>{{ r.note }}</td>
+          <td class="text-nowrap">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('workbook.edit', rid=r.id, **flt) }}">Редакт.</a>
+            <a class="btn btn-sm btn-outline-danger" href="{{ url_for('workbook.delete', rid=r.id, **flt) }}">Удалить</a>
+          </td>
+        </tr>
+        {% endfor %}
+        {% if rows|length == 0 %}
+        <tr><td colspan="13" class="text-center text-secondary py-4">Нет строк</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card-body d-flex justify-content-between">
+    <div class="h6 mb-0">ИТОГО по смене:</div>
+    <div class="text-end">
+      <div>План: <b>{{ '%.3f'|format(plan_qty) }}</b> • <b>{{ '%.2f'|format(plan_sum) }}</b> грн</div>
+      <div>Факт: <b>{{ '%.3f'|format(fact_qty) }}</b> • <b>{{ '%.2f'|format(fact_sum) }}</b> грн</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

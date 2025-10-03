@@ -6,6 +6,7 @@ from .cabinet.routes import cabinet_bp
 from .norms.routes import norms_bp
 from .tmc.routes import tmc_bp
 from .services.routes import services_bp
+from .workbook.routes import workbook_bp
 def create_app():
     app=Flask(__name__)
     app.config["SECRET_KEY"]="change-me"
@@ -16,4 +17,5 @@ def create_app():
     app.register_blueprint(norms_bp, url_prefix="/norms")
     app.register_blueprint(tmc_bp, url_prefix="/tmc")
     app.register_blueprint(services_bp, url_prefix="/services")
+    app.register_blueprint(workbook_bp, url_prefix="/workbook")
     return app
