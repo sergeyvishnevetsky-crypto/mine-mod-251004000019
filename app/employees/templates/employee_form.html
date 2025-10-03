@@ -1,14 +1,61 @@
-{% extends "base.html" %}{% block content %}
+{% extends "base.html" %}
+{% block content %}
 <h3 class="mb-3">{{ title }}</h3>
 <form method="post" class="row g-3">
-  <div class="col-md-6"><label class="form-label">ФИО</label><input name="fio" class="form-control" required value="{{ r.fio if r else '' }}"></div>
-  <div class="col-md-6"><label class="form-label">Телефон</label><input name="phone" class="form-control" value="{{ r.phone if r else '' }}"></div>
-  <div class="col-md-4"><label class="form-label">Должность</label><input name="position" class="form-control" value="{{ r.position if r else '' }}"></div>
-  <div class="col-md-4"><label class="form-label">Подразделение</label><input name="dept" class="form-control" value="{{ r.dept if r else '' }}"></div>
-  <div class="col-md-2"><label class="form-label">Статус</label>
-    <select name="status" class="form-select">{% for s in ['Активен','Ограничен','Архив'] %}<option {{ 'selected' if r and r.status==s else '' }}>{{ s }}</option>{% endfor %}</select></div>
-  <div class="col-md-2"><label class="form-label">Доступ</label>
-    <select name="access" class="form-select">{% for a in ['Полный','Кабинет','Чтение','Нет'] %}<option {{ 'selected' if r and r.access==a else '' }}>{{ a }}</option>{% endfor %}</select></div>
-  <div class="col-12"><button class="btn btn-primary">Сохранить</button> <a class="btn btn-outline-secondary" href="{{ url_for('employees.index') }}">Отмена</a></div>
+  <div class="col-md-4">
+    <label class="form-label">Фамилия</label>
+    <input name="last_name" class="form-control" required value="{{ r.last_name if r else '' }}">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Имя</label>
+    <input name="first_name" class="form-control" required value="{{ r.first_name if r else '' }}">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Отчество</label>
+    <input name="middle_name" class="form-control" value="{{ r.middle_name if r else '' }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Табельный №</label>
+    <input name="personnel_no" class="form-control" value="{{ r.personnel_no if r else '' }}" placeholder="пусто = авто">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">ИНН <span class="text-danger">*</span></label>
+    <input name="inn" class="form-control" required value="{{ r.inn if r else '' }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Должность</label>
+    <input name="position" class="form-control" value="{{ r.position if r else '' }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Подразделение</label>
+    <input name="dept" class="form-control" value="{{ r.dept if r else '' }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Телефон</label>
+    <input name="phone" class="form-control" value="{{ r.phone if r else '' }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Статус</label>
+    <select name="status" class="form-select">
+      {% for s in ['Активен','Ограничен','Архив'] %}
+      <option {{ 'selected' if r and r.status==s else '' }}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Доступ</label>
+    <select name="access" class="form-select">
+      {% for a in ['Полный','Кабинет','Чтение','Нет'] %}
+      <option {{ 'selected' if r and r.access==a else '' }}>{{ a }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-12">
+    <button class="btn btn-primary">Сохранить</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('employees.index') }}">Отмена</a>
+  </div>
 </form>
 {% endblock %}
