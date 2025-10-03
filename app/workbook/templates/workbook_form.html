@@ -2,21 +2,31 @@
 {% block content %}
 <h3 class="mb-3">{{ title }}</h3>
 <form method="post" class="row g-3">
-  <div class="col-md-3">
-    <label class="form-label">Сотрудник</label>
-    <select class="form-select" name="employee_id" required>
-      {% for e in employees %}<option value="{{e.id}}" {{ 'selected' if r.employee_id==e.id else '' }}>{{ e.tab_no }} — {{ e.name }} ({{ e.role }})</option>{% endfor %}
-    </select>
-  </div>
-  <div class="col-md-4">
-    <label class="form-label">Вид работ (норма)</label>
-    <select class="form-select" name="norm_id" required>
-      {% for n in norms %}<option value="{{n.id}}" {{ 'selected' if r.norm_id==n.id else '' }}>{{ n.code }} — {{ n.name }}</option>{% endfor %}
-    </select>
-  </div>
-  <div class="col-md-2"><label class="form-label">План, кол-во</label><input type="number" step="0.001" class="form-control" name="qty_plan" value="{{ r.qty_plan }}"></div>
-  <div class="col-md-2"><label class="form-label">Факт, кол-во</label><input type="number" step="0.001" class="form-control" name="qty_fact" value="{{ r.qty_fact }}"></div>
-  <div class="col-md-6"><label class="form-label">Примечание</label><input class="form-control" name="note" value="{{ r.note }}"></div>
+  {% if mode == 'plan' %}
+    <div class="col-md-3">
+      <label class="form-label">Сотрудник</label>
+      <select class="form-select" name="employee_id" required>
+        {% for e in employees %}<option value="{{e.id}}" {{ 'selected' if r.employee_id==e.id else '' }}>{{ e.tab_no }} — {{ e.name }} ({{ e.role }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">Вид работ (норма)</label>
+      <select class="form-select" name="norm_id" required>
+        {% for n in norms %}<option value="{{n.id}}" {{ 'selected' if r.norm_id==n.id else '' }}>{{ n.code }} — {{ n.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2"><label class="form-label">План, кол-во</label><input type="number" step="0.001" class="form-control" name="qty_plan" value="{{ r.qty_plan }}"></div>
+    <div class="col-md-3"><label class="form-label">Примечание</label><input class="form-control" name="note" value="{{ r.note }}"></div>
+  {% else %}
+    <div class="col-md-5">
+      <label class="form-label">Строка</label>
+      <input class="form-control" disabled value="{{ r.employee_id }} • {{ r.norm_id }}">
+      <div class="form-text">В фазе «ФАКТ» редактируется только количество факта и примечание.</div>
+    </div>
+    <div class="col-md-2"><label class="form-label">Факт, кол-во</label><input type="number" step="0.001" class="form-control" name="qty_fact" value="{{ r.qty_fact }}"></div>
+    <div class="col-md-5"><label class="form-label">Примечание</label><input class="form-control" name="note" value="{{ r.note }}"></div>
+  {% endif %}
+
   <div class="col-12">
     <button class="btn btn-primary">Сохранить</button>
     <a class="btn btn-outline-secondary" href="{{ url_for('workbook.index', **flt) }}">Отмена</a>
