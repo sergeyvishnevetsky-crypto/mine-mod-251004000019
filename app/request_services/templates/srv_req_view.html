@@ -1,0 +1,53 @@
+{% extends "base.html" %}{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+<div class="card mb-3">
+  <div class="card-body row g-3">
+    <div class="col-md-2"><b>Дата:</b> {{ r.date }}</div>
+    <div class="col-md-3"><b>Заявитель:</b> {{ emp.name if emp else r.requester_id }}</div>
+    <div class="col-md-3"><b>Потребитель:</b> {{ r.consumer }}</div>
+    <div class="col-md-2"><b>Срок:</b> {{ r.need_by }}</div>
+    <div class="col-md-2"><b>Статус:</b> <span class="badge bg-{% if r.status=='draft' %}secondary{% elif r.status=='submitted' %}info text-dark{% elif r.status=='approved' %}success{% elif r.status=='fulfilled' %}primary{% else %}dark{% endif %}">{{ r.status }}</span></div>
+    <div class="col-md-12"><b>Комментарий:</b> {{ r.comment }}</div>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-header d-flex justify-content-between">
+    <div>Позиции ({{ r.items|length }})</div>
+    <div class="d-flex gap-2">
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('request_services.template_xlsx') }}">📄 Шаблон XLSX/CSV</a>
+      {% if r.status=='draft' %}
+      <form method="post" action="{{ url_for('request_services.import_items', rid=r.id) }}" enctype="multipart/form-data" class="d-inline-flex align-items-center gap-2">
+        <input type="file" name="file" class="form-control form-control-sm" accept=".xlsx,.csv" required style="max-width:220px">
+        <button class="btn btn-sm btn-outline-success">⬆ Импорт</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light"><tr><th>Код</th><th>Наименование услуги</th><th>Ед.</th><th class="text-end">Объем</th></tr></thead>
+      <tbody>
+        {% for it in r.items %}
+        <tr><td>{{ it.code }}</td><td>{{ it.name }}</td><td>{{ it.unit }}</td><td class="text-end">{{ '%.3f'|format(it.qty|float) }}</td></tr>
+        {% endfor %}
+        {% if r.items|length == 0 %}<tr><td colspan="4" class="text-center text-secondary py-4">Нет позиций</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="d-flex gap-2">
+  <a class="btn btn-outline-secondary" href="{{ url_for('request_services.index') }}">← К списку</a>
+  {% if r.status=='draft' %}
+    <a class="btn btn-primary" href="{{ url_for('request_services.edit', rid=r.id) }}">Редактировать</a>
+    <form method="post" action="{{ url_for('request_services.submit', rid=r.id) }}"><button class="btn btn-success">📤 Подать</button></form>
+  {% elif r.status=='submitted' %}
+    <form method="post" action="{{ url_for('request_services.approve', rid=r.id) }}"><button class="btn btn-success">✅ Утвердить</button></form>
+  {% elif r.status=='approved' %}
+    <form method="post" action="{{ url_for('request_services.fulfill', rid=r.id) }}"><button class="btn btn-primary">🧾 Исполнить</button></form>
+  {% elif r.status in ['fulfilled','closed'] %}
+    <form method="post" action="{{ url_for('request_services.close', rid=r.id) }}"><button class="btn btn-dark">✔ Закрыть</button></form>
+  {% endif %}
+</div>
+{% endblock %}

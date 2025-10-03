@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+<div class="card mb-3">
+  <div class="card-body d-flex flex-wrap gap-2 align-items-end">
+    <form method="get" action="{{ url_for('request_tmc.index') }}" class="d-flex flex-wrap gap-2">
+      <input class="form-control" name="q" placeholder="Поиск по отделу/позициям…" style="min-width:280px">
+      <select class="form-select" name="status">
+        <option value="">Все статусы</option>
+        {% for s in STATUSES %}<option value="{{s}}">{{ s }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-outline-secondary">Фильтр</button>
+    </form>
+    <div class="ms-auto d-flex gap-2">
+      <a class="btn btn-primary" href="{{ url_for('request_tmc.new') }}">➕ Новая заявка</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('request_tmc.export_csv') }}">⬇ Экспорт CSV</a>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light"><tr>
+        <th>№</th><th>Дата</th><th>Статус</th><th>Заявитель</th><th>Отдел</th><th>Срок</th><th>Позиции</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.date }}</td>
+          <td><span class="badge bg-{% if r.status=='draft' %}secondary{% elif r.status=='submitted' %}info text-dark{% elif r.status=='approved' %}success{% elif r.status=='fulfilled' %}primary{% else %}dark{% endif %}">{{ r.status }}</span></td>
+          <td>{% set e = ([]) %}{% endset %}{% for e in [] %}{% endfor %}{{ r.requester_id }}</td>
+          <td>{{ r.department }}</td>
+          <td>{{ r.need_by }}</td>
+          <td>{{ r.items|length }}</td>
+          <td class="text-nowrap">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('request_tmc.view', rid=r.id) }}">Открыть</a>
+            {% if r.status=='draft' %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('request_tmc.edit', rid=r.id) }}">Редакт.</a>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if rows|length == 0 %}<tr><td colspan="8" class="text-center text-secondary py-4">Нет заявок</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

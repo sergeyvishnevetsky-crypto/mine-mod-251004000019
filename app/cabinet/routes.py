@@ -12,8 +12,8 @@ REFS = {
 # ===== РАБОЧИЕ ДОКУМЕНТЫ (вкладка docs) =====
 DOCS = {
     "1": ("Книга нарядов",               "pickers/workbook.html"),
-    "2": ("Заявка на ТМЦ",               "pickers/generic.html"),
-    "3": ("Заявка на оказание услуг",    "pickers/generic.html"),
+    "2": ("Заявка на ТМЦ",               "pickers/req_tmc.html"),
+    "3": ("Заявка на оказание услуг",    "pickers/req_services.html"),
     "4": ("Табель выходов",              "pickers/generic.html"),
     "5": ("Отчет о добыче",              "pickers/generic.html"),
     "6": ("Отчет об отгрузке",           "pickers/generic.html"),

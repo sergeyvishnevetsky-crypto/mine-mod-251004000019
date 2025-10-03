@@ -1,0 +1,39 @@
+{% extends "base.html" %}{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+<form method="post" class="row g-3">
+  <div class="col-md-3"><label class="form-label">Дата</label><input type="date" class="form-control" name="date" value="{{ r.date }}"></div>
+  <div class="col-md-3">
+    <label class="form-label">Заявитель</label>
+    <select class="form-select" name="requester_id" required>
+      {% for e in employees %}<option value="{{e.id}}" {{ 'selected' if r.requester_id==e.id else '' }}>{{ e.tab_no }} — {{ e.name }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3"><label class="form-label">Потребитель (цех/участок)</label><input class="form-control" name="consumer" value="{{ r.consumer }}"></div>
+  <div class="col-md-3">
+    <label class="form-label">Приоритет</label>
+    <select class="form-select" name="priority">
+      {% for p in ['Обычная','Высокая','Критическая'] %}<option {{ 'selected' if r.priority==p else '' }}>{{ p }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-md-3"><label class="form-label">Требуется к</label><input type="date" class="form-control" name="need_by" value="{{ r.need_by }}"></div>
+  <div class="col-md-9"><label class="form-label">Комментарий</label><input class="form-control" name="comment" value="{{ r.comment }}"></div>
+
+  <div class="col-12"><hr></div>
+  <div class="col-12"><div class="h6 mb-2">Позиции</div></div>
+  <div class="col-12">
+    <div class="row g-2">
+      {% for i in range(0,5) %}
+      <div class="col-md-2"><input class="form-control" name="code[]" placeholder="Код услуги"></div>
+      <div class="col-md-6"><input class="form-control" name="name[]" placeholder="Наименование услуги"></div>
+      <div class="col-md-2"><input class="form-control" name="unit[]" placeholder="Ед. (час/смена/…)"></div>
+      <div class="col-md-2"><input class="form-control" name="qty[]" type="number" step="0.001" placeholder="Объем"></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-12">
+    <button class="btn btn-primary">{{ 'Создать' if mode=='create' else 'Сохранить' }}</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('request_services.index') }}">Отмена</a>
+  </div>
+</form>
+{% endblock %}
