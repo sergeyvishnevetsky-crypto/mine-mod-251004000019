@@ -1,0 +1,13 @@
+/* Унификация высоты контролов в тулбаре */
+.toolbar .form-control,
+.toolbar .form-select,
+.toolbar .btn { height: 38px; }
+
+/* Равные карточки в сводке */
+.stat .card { min-height: 92px; }
+
+/* Узкий file input, чтобы не ломал ряд */
+.toolbar input[type="file"] { max-width: 240px; }
+
+/* Мелкие отступы между элементами */
+.toolbar { gap: .5rem; }
