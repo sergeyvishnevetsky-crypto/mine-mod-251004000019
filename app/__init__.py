@@ -7,6 +7,7 @@ from .norms.routes import norms_bp
 from .tmc.routes import tmc_bp
 from .services.routes import services_bp
 from .workbook.routes import workbook_bp
+from .mining_report.routes import mining_bp
 from .request_tmc.routes import request_tmc_bp
 from .request_services.routes import request_services_bp
 def create_app():
@@ -20,6 +21,7 @@ def create_app():
     app.register_blueprint(tmc_bp, url_prefix="/tmc")
     app.register_blueprint(services_bp, url_prefix="/services")
     app.register_blueprint(workbook_bp, url_prefix="/workbook")
+    app.register_blueprint(mining_bp, url_prefix="/mining_report")
     app.register_blueprint(request_tmc_bp, url_prefix="/request_tmc")
     app.register_blueprint(request_services_bp, url_prefix="/request_services")
     return app

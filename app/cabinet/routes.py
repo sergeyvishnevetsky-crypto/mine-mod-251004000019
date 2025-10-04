@@ -15,7 +15,7 @@ DOCS = {
     "2": ("Заявка на ТМЦ",               "pickers/req_tmc.html"),
     "3": ("Заявка на оказание услуг",    "pickers/req_services.html"),
     "4": ("Табель выходов",              "pickers/generic.html"),
-    "5": ("Отчет о добыче",              "pickers/generic.html"),
+    "5": ("Отчет о добыче",              "pickers/report_mining.html"),
     "6": ("Отчет об отгрузке",           "pickers/generic.html"),
     "7": ("Баланс ТМЦ",                  "pickers/generic.html"),
     "8": ("Баланс товара",               "pickers/generic.html"),

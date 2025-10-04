@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-md-2">
+        <label class="form-label">с даты</label>
+        <input type="date" class="form-control" name="from" value="{{ request.args.get('from','') }}">
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">по дату</label>
+        <input type="date" class="form-control" name="to" value="{{ request.args.get('to','') }}">
+      </div>
+      <div class="col-md-2"><label class="form-label">Участок</label><input class="form-control" name="site" value="{{ request.args.get('site','') }}"></div>
+      <div class="col-md-2"><label class="form-label">Бригада</label><input class="form-control" name="brigade" value="{{ request.args.get('brigade','') }}"></div>
+      <div class="col-md-2"><label class="form-label">Смена</label><input class="form-control" name="shift" value="{{ request.args.get('shift','') }}" placeholder="I / II / III / IV"></div>
+      <div class="col-md-2"><label class="form-label">Материал</label><input class="form-control" name="material" value="{{ request.args.get('material','') }}"></div>
+      <div class="col-12 d-flex gap-2 mt-2">
+        <button class="btn btn-outline-secondary">Фильтр</button>
+        <a class="btn btn-outline-dark" href="{{ url_for('mining_report.index') }}">Сброс</a>
+        <a class="btn btn-primary ms-auto" href="{{ url_for('mining_report.new') }}">➕ Добавить запись</a>
+        <a class="btn btn-outline-primary" href="{{ url_for('mining_report.export_csv') }}">⬇ Экспорт CSV</a>
+        <form method="post" action="{{ url_for('mining_report.import_') }}" enctype="multipart/form-data" class="d-inline-flex gap-2">
+          <input type="file" name="file" class="form-control" accept=".xlsx,.csv" required style="max-width:240px">
+          <button class="btn btn-outline-success">⬆ Импорт</button>
+        </form>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-secondary">План за период</div>
+      <div class="h4 mb-0">{{ '%.0f'|format(plan_sum) }} {{ rows[0].unit if rows|length>0 else 'т' }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-secondary">Факт за период</div>
+      <div class="h4 mb-0">{{ '%.0f'|format(fact_sum) }} {{ rows[0].unit if rows|length>0 else 'т' }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-secondary">Отклонение</div>
+      {% set d = fact_sum - plan_sum %}
+      <div class="h4 mb-0">{{ '%+.0f'|format(d) }}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Дата</th><th>Смена</th><th>Участок</th><th>Бригада</th>
+          <th>Материал</th><th>Ед.</th><th class="text-end">План</th><th class="text-end">Факт</th>
+          <th class="text-end">Откл.</th><th>Прим.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        {% set diff = (r.fact|float) - (r.plan|float) %}
+        <tr>
+          <td>{{ r.date }}</td>
+          <td>{{ r.shift }}</td>
+          <td>{{ r.site }}</td>
+          <td>{{ r.brigade }}</td>
+          <td>{{ r.material }}</td>
+          <td>{{ r.unit }}</td>
+          <td class="text-end">{{ '%.3f'|format(r.plan|float) }}</td>
+          <td class="text-end">{{ '%.3f'|format(r.fact|float) }}</td>
+          <td class="text-end {% if diff>=0 %}text-success{% else %}text-danger{% endif %}">{{ '%+.3f'|format(diff) }}</td>
+          <td>{{ r.note }}</td>
+        </tr>
+        {% endfor %}
+        {% if rows|length == 0 %}
+          <tr><td colspan="10" class="text-center text-secondary py-4">Нет данных</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
