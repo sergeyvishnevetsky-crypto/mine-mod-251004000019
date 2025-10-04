@@ -4,6 +4,7 @@ cabinet_bp = Blueprint("cabinet", __name__, template_folder="templates")
 
 # ===== СПРАВОЧНИКИ (вкладка refs) =====
 REFS = {
+    "Показатели готовой продукции": "pickers/product_metrics.html",
     "1": ("Нормы и расценки",        "pickers/norms.html"),
     "2": ("Перечень ТМЦ",             "pickers/tmc.html"),
     "3": ("Перечень услуг",           "pickers/services.html"),
