@@ -8,7 +8,6 @@ from .tmc.routes import tmc_bp
 from .services.routes import services_bp
 from .workbook.routes import workbook_bp
 from .mining_report.routes import mining_bp
-from .product_metrics.routes import metrics_bp
 from .request_tmc.routes import request_tmc_bp
 from .request_services.routes import request_services_bp
 def create_app():
@@ -23,7 +22,18 @@ def create_app():
     app.register_blueprint(services_bp, url_prefix="/services")
     app.register_blueprint(workbook_bp, url_prefix="/workbook")
     app.register_blueprint(mining_bp, url_prefix="/mining_report")
-    app.register_blueprint(metrics_bp, url_prefix="/product_metrics")
     app.register_blueprint(request_tmc_bp, url_prefix="/request_tmc")
     app.register_blueprint(request_services_bp, url_prefix="/request_services")
+        # Product Metrics: основной и совместимый пути
+
+        # -- Product Metrics (dict) --
+    try:
+        from .product_metrics import bp as product_metrics_bp, compat_bp as product_metrics_compat_bp
+        if 'product_metrics' not in app.blueprints:
+            app.register_blueprint(product_metrics_bp, url_prefix="/dict/product-metrics")
+        if 'product_metrics_compat' not in app.blueprints:
+            app.register_blueprint(product_metrics_compat_bp, url_prefix="/dict/r")
+    except Exception as e:
+        app.logger.warning(f'product_metrics init failed: {e}')
+
     return app
