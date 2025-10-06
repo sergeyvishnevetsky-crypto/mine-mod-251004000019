@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">{{ 'Новый склад' if mode=='create' else 'Редактирование склада' }}</h3>
+
+  <form method="post" class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Название склада</label>
+      <input name="name" class="form-control" value="{{ rec.name or '' }}" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Код</label>
+      <input name="code" class="form-control" value="{{ rec.code or '' }}" placeholder="например FG-01">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Локация</label>
+      <input name="location" class="form-control" value="{{ rec.location or '' }}" placeholder="цех/адрес/участок">
+    </div>
+    <div class="col-md-12">
+      <label class="form-label">Примечание</label>
+      <textarea name="note" class="form-control" rows="3">{{ rec.note or '' }}</textarea>
+    </div>
+    <div class="col-md-3 form-check ms-2 mt-2">
+      <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if rec.is_active in (True,'1','true','on') %}checked{% endif %}>
+      <label for="is_active" class="form-check-label">Активный</label>
+    </div>
+    <div class="col-12 mt-2">
+      <button class="btn btn-primary" type="submit">Сохранить</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('fgwh.index') }}">Отмена</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
