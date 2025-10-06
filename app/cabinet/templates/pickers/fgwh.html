@@ -1,7 +1,9 @@
-<div class="p-2">
-  <div class="alert alert-secondary mb-3">
-    Заглушка раздела «Склад готовой продукции».
-  </div>
-  <a href="{{ url_for('fgwh.index') }}" class="btn btn-primary">Открыть страницу склада</a>
-  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Закрыть</button>
+{# Модалка параметров: Склады готовой продукции #}
+<div class="mb-3">
+  <h5 class="mb-1">Справочник складов</h5>
+  <div class="text-muted">Создание и редактирование складов готовой продукции, просмотр списка, импорт/экспорт.</div>
+</div>
+
+<div class="d-grid gap-2">
+  <a class="btn btn-primary" href="{{ url_for('fgwh.index') }}">Открыть раздел</a>
 </div>
