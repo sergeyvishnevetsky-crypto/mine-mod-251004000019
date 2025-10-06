@@ -1,37 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, Response
 import io, csv, datetime as dt
-
-from datetime import datetime
-from flask import flash
-
-def _parse_date_ru(s):
-    if not s: return None
-    s = s.strip()
-    for fmt in ("%d.%m.%Y", "%Y-%m-%d"):
-        try:
-            return datetime.strptime(s, fmt).date()
-        except ValueError:
-            pass
-    # последний шанс: fromisoformat
-    try:
-        return datetime.fromisoformat(s).date()
-    except Exception:
-        raise ValueError(f"Некорректная дата: {s}")
-
-def _num(s, kind=float, default=0):
-    if s is None: return default
-    s = str(s).strip().replace(",", ".")
-    if s == "": return default
-    try:
-        return kind(s)
-    except Exception:
-        # пробуем как int, если просили int и там дробь без точки/запятой
-        if kind is int:
-            try:
-                return int(float(s))
-            except Exception:
-                pass
-        raise ValueError(f"Некорректное число: {s}")
 try:
     import pandas as pd
 except Exception:
