@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+
+<div class="card mb-3">
+  <div class="card-body d-flex flex-wrap align-items-end toolbar">
+    <!-- Фильтры слева -->
+    <div class="d-flex flex-wrap align-items-end toolbar">
+      <div class="me-2">
+        <label class="form-label mb-1 small">с даты</label>
+        <input type="date" class="form-control" name="from" form="flt" value="{{ request.args.get('from','') }}">
+      </div>
+      <div class="me-2">
+        <label class="form-label mb-1 small">по дату</label>
+        <input type="date" class="form-control" name="to" form="flt" value="{{ request.args.get('to','') }}">
+      </div>
+      <div class="me-2">
+        <label class="form-label mb-1 small">Фракция</label>
+        <input class="form-control" name="fraction" form="flt" placeholder="напр. 0–200" value="{{ request.args.get('fraction','') }}">
+      </div>
+      <div class="d-flex align-items-end me-2">
+        <button class="btn btn-outline-secondary me-2" form="flt">Фильтр</button>
+        <a class="btn btn-outline-dark" href="{{ url_for('mining_report.index') }}">Сброс</a>
+      </div>
+    </div>
+
+    <!-- Действия справа -->
+    <div class="ms-auto d-flex flex-wrap align-items-end toolbar">
+      <a class="btn btn-primary" href="{{ url_for('mining_report.new') }}">➕ Добавить запись</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('mining_report.export_csv') }}">⬇ Экспорт CSV</a>
+      <form id="imp" method="post" action="{{ url_for('mining_report.import_') }}" enctype="multipart/form-data" class="d-flex align-items-end">
+        <input type="file" name="file" class="form-control me-2" accept=".xlsx,.csv" required>
+        <button class="btn btn-outline-success">⬆ Импорт</button>
+      </form>
+    </div>
+
+    <!-- Невидимая форма, чтобы не вкладывать формы -->
+    <form id="flt" method="get"></form>
+  </div>
+</div>
+
+<div class="row g-3 mb-3 stat">
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-secondary">План за период</div>
+      <div class="h4 mb-0">{{ '%.0f'|format(plan_sum) }} {{ rows[0].unit if rows|length>0 else 'т' }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-secondary">Факт за период</div>
+      <div class="h4 mb-0">{{ '%.0f'|format(fact_sum) }} {{ rows[0].unit if rows|length>0 else 'т' }}</div>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <div class="text-secondary">Отклонение</div>
+      {% set d = fact_sum - plan_sum %}
+      <div class="h4 mb-0">{{ '%+.0f'|format(d) }}</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Дата</th><th>Фракция</th><th>Качество</th>
+          <th class="text-end">План/сутки</th>
+          <th class="text-end">Факт I</th>
+          <th class="text-end">Факт II</th>
+          <th class="text-end">Факт III</th>
+          <th class="text-end">Факт IV</th>
+          <th class="text-end">Факт/сутки</th>
+          <th class="text-end">Откл.</th>
+          <th>Прим.</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        {% set diff = (r.fact_total|float) - (r.plan_total|float) %}
+        <tr>
+          <td>{{ r.date }}</td>
+          <td>{{ r.fraction }}</td>
+          <td>{{ r.quality }}</td>
+          <td class="text-end">{{ '%.3f'|format(r.plan_total|float) }}</td>
+          <td class="text-end">{{ '%.3f'|format(r.fact_s1|float) }}</td>
+          <td class="text-end">{{ '%.3f'|format(r.fact_s2|float) }}</td>
+          <td class="text-end">{{ '%.3f'|format(r.fact_s3|float) }}</td>
+          <td class="text-end">{{ '%.3f'|format(r.fact_s4|float) }}</td>
+          <td class="text-end">{{ '%.3f'|format(r.fact_total|float) }}</td>
+          <td class="text-end {% if diff>=0 %}text-success{% else %}text-danger{% endif %}">{{ '%+.3f'|format(diff) }}</td>
+          <td>{{ r.note }}</td>
+        </tr>
+        {% endfor %}
+        {% if rows|length == 0 %}
+          <tr><td colspan="11" class="text-center text-secondary py-4">Нет данных</td></tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

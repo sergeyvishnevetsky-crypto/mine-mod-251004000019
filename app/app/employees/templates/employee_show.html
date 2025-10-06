@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+<div class="card">
+  <div class="card-body">
+    <dl class="row">
+      <dt class="col-sm-3">Фамилия</dt><dd class="col-sm-9">{{ r.last_name }}</dd>
+      <dt class="col-sm-3">Имя</dt><dd class="col-sm-9">{{ r.first_name }}</dd>
+      <dt class="col-sm-3">Отчество</dt><dd class="col-sm-9">{{ r.middle_name }}</dd>
+      <dt class="col-sm-3">Табельный №</dt><dd class="col-sm-9">{{ r.personnel_no }}</dd>
+      <dt class="col-sm-3">ИНН</dt><dd class="col-sm-9">{{ r.inn }}</dd>
+      <dt class="col-sm-3">Должность</dt><dd class="col-sm-9">{{ r.position }}</dd>
+      <dt class="col-sm-3">Подразделение</dt><dd class="col-sm-9">{{ r.dept }}</dd>
+      <dt class="col-sm-3">Телефон</dt><dd class="col-sm-9">{{ r.phone }}</dd>
+      <dt class="col-sm-3">Статус</dt><dd class="col-sm-9">{{ r.status }}</dd>
+      <dt class="col-sm-3">Доступ</dt><dd class="col-sm-9">{{ r.access }}</dd>
+    </dl>
+    <a class="btn btn-outline-primary" href="{{ url_for('employees.edit', emp_id=r.id) }}">Редактировать</a>
+    <a class="btn btn-secondary" href="{{ url_for('employees.index') }}">Назад</a>
+  </div>
+</div>
+{% endblock %}

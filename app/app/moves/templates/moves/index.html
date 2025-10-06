@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Движение продукции</h3>
+  <div class="mb-3 d-flex gap-2">
+    <a class="btn btn-primary" href="{{ url_for('moves.receipt') }}">+ Приём</a>
+    <a class="btn btn-primary" href="{{ url_for('moves.process') }}">+ Переработка</a>
+  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for c,m in messages %}<div class="alert alert-{{ 'success' if c=='success' else 'warning' if c=='warning' else 'secondary' }} py-2 mb-2">{{ m }}</div>{% endfor %}
+  {% endif %}
+  {% endwith %}
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Дата</th><th>Тип</th><th>Склад</th><th>Продукт</th><th class="text-end">Приход</th><th class="text-end">Расход</th><th>Статус</th><th>Комментарий</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="text-nowrap">{{ r.date }}</td>
+          <td>{{ r.doc_type }}</td>
+          <td>{{ r.warehouse_name }}</td>
+          <td>{{ r.product_name }}</td>
+          <td class="text-end">{{ r.qty_in or '' }}</td>
+          <td class="text-end">{{ r.qty_out or '' }}</td>
+          <td>{{ r.status }}</td>
+          <td style="max-width:280px">{{ r.note }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">Пока нет движений</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

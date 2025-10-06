@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-3">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="mb-0">Статьи затрат</h3>
+    <div class="btn-group">
+      <a href="{{ url_for('cost_items.new') }}" class="btn btn-primary">Добавить</a>
+      <a href="{{ url_for('cost_items.template_xlsx') }}" class="btn btn-outline-secondary">Шаблон Excel</a>
+      <a href="{{ url_for('cost_items.export_csv') }}" class="btn btn-outline-secondary">Экспорт CSV</a>
+      <a href="{{ url_for('cost_items.export_xlsx') }}" class="btn btn-outline-secondary">Экспорт Excel</a>
+      <form action="{{ url_for('cost_items.import_post') }}" method="post" enctype="multipart/form-data" class="d-inline-block ms-2">
+        <input type="file" name="file" accept=".xlsx,.xls" required class="form-control d-inline-block" style="width: 220px;">
+        <button class="btn btn-outline-success ms-1" type="submit">Импорт</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-2 mb-2">
+    <div class="col-md-6">
+      <input id="q" class="form-control" placeholder="Поиск по коду или названию…" value="{{ request.args.get('q','') }}">
+    </div>
+    <div class="col-md-4">
+      <select id="cfo" class="form-select">
+        <option value="">Все ЦФО</option>
+        {% for val in cfo_values %}
+          <option value="{{ val }}" {{ 'selected' if request.args.get('cfo') == val else '' }}>{{ val }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-outline-primary w-100" onclick="applyFilters()">Фильтр</button>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Код статьи</th>
+          <th>Статья затрат</th>
+          <th>ЦФО</th>
+          <th class="text-end">Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr class="{{ 'text-muted' if r.archived else '' }}">
+          <td class="text-monospace">{{ r.code }}</td>
+          <td>{{ r.name }}</td>
+          <td>{{ r.cfo }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('cost_items.edit', rid=r.id) }}">Редактировать</a>
+            {% if r.archived %}
+              <a class="btn btn-sm btn-outline-success" href="{{ url_for('cost_items.restore', rid=r.id) }}">Восстановить</a>
+            {% else %}
+              <a class="btn btn-sm btn-outline-danger" href="{{ url_for('cost_items.archive', rid=r.id) }}">Архивировать</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-4">Нет данных</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function applyFilters() {
+  const params = new URLSearchParams(window.location.search);
+  params.set('q', document.getElementById('q').value || '');
+  params.set('cfo', document.getElementById('cfo').value || '');
+  window.location = '?' + params.toString();
+}
+</script>
+{% endblock %}

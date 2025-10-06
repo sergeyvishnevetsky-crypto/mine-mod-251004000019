@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">{{ title }}</h3>
+
+<div class="card mb-3">
+  <div class="card-body d-flex flex-wrap align-items-end gap-3">
+    <form class="d-flex flex-wrap gap-2 align-items-end" method="get" action="{{ url_for('services.index') }}">
+      <div>
+        <label class="form-label mb-1">Поиск</label>
+        <input class="form-control" style="min-width:280px" name="q" value="{{ request.args.get('q','') }}" placeholder="Код / наименование / поставщик">
+      </div>
+      <div>
+        <label class="form-label mb-1">Поставщик</label>
+        <input class="form-control" name="supplier" value="{{ request.args.get('supplier','') }}">
+      </div>
+      <div>
+        <label class="form-label mb-1">Статус</label>
+        <select class="form-select" name="status">
+          {% for s in ['','Активен','Ограничен','Архив'] %}<option value="{{s}}" {{ 'selected' if request.args.get('status')==s else '' }}>{{ s or '—' }}</option>{% endfor %}
+        </select>
+      </div>
+      <button class="btn btn-outline-secondary">Фильтр</button>
+    </form>
+    <div class="ms-auto d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{{ url_for('services.add') }}">➕ Добавить</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('services.template_xlsx') }}">📄 Шаблон XLSX</a>
+      <form method="post" action="{{ url_for('services.import_post') }}" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
+        <label class="form-label mb-0">Импорт:</label>
+        <input type="file" name="file" class="form-control" accept=".xlsx,.csv" required style="max-width:260px">
+        <button class="btn btn-outline-success">⬆ Импорт</button>
+      </form>
+      <a class="btn btn-outline-primary" href="{{ url_for('services.export_xlsx', **request.args) }}">⬇ Экспорт XLSX</a>
+      <a class="btn btn-outline-primary" href="{{ url_for('services.export_csv', **request.args) }}">⬇ Экспорт CSV</a>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light"><tr>
+        <th>Код</th><th>Наименование</th><th>Ед.</th><th>Цена</th><th>Вал.</th><th>Поставщик</th><th>Статус</th><th>Действия</th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.code }}</td><td>{{ r.name }}</td><td>{{ r.unit }}</td>
+          <td>{{ '%.2f'|format(r.price|float) }}</td><td>{{ r.currency }}</td>
+          <td>{{ r.supplier }}</td>
+          <td><span class="badge {% if r.status=='Активен' %}bg-success{% elif r.status=='Ограничен' %}bg-warning text-dark{% elif r.status=='Архив' %}bg-secondary{% else %}bg-light text-dark{% endif %}">{{ r.status }}</span></td>
+          <td class="text-nowrap">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('services.edit', rid=r.id) }}">Редакт.</a>
+            {% if r.status != 'Архив' %}<a class="btn btn-sm btn-outline-secondary" href="{{ url_for('services.archive', rid=r.id) }}">Архив</a>
+            {% else %}<a class="btn btn-sm btn-outline-danger" href="{{ url_for('services.delete', rid=r.id) }}">Удалить</a>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if rows|length == 0 %}<tr><td colspan="8" class="text-center text-secondary py-4">Нет записей</td></tr>{% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-body d-flex justify-content-between">
+    <div class="text-secondary">Показано {{ rows|length }} из {{ total }} • Стр. {{ page }}</div>
+    <div><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('services.index') }}">1</a></div>
+  </div>
+</div>
+{% endblock %}

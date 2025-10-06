@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-3" style="max-width: 720px;">
+  <h4 class="mb-3">{{ title }}</h4>
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">Код статьи *</label>
+      <input name="code" class="form-control" value="{{ data.code }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Статья затрат *</label>
+      <input name="name" class="form-control" value="{{ data.name }}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">ЦФО</label>
+      <input name="cfo" class="form-control" value="{{ data.cfo }}">
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary" type="submit">Сохранить</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('cost_items.index') }}">Отмена</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

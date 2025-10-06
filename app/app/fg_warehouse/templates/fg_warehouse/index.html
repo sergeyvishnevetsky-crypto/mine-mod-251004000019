@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Склад готовой продукции</h3>
+  <div class="alert alert-secondary">
+    Раздел в разработке. Здесь будет учет остатков, приход/расход, отгрузки и отчёты.
+  </div>
+  <a href="{{ url_for('cabinet.index') }}" class="btn btn-outline-secondary">← Назад в кабинет</a>
+</div>
+{% endblock %}

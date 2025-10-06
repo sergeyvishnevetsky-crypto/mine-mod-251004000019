@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Рецепты переработки</h3>
+  <div class="mb-3 text-end">
+    <a href="{{ url_for('recipes.create') }}" class="btn btn-primary">+ Новый рецепт</a>
+  </div>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}{% for c,m in messages %}
+    <div class="alert alert-{{ 'success' if c=='success' else 'warning' if c=='warning' else 'secondary' }} py-2">{{ m }}</div>
+  {% endfor %}{% endif %}{% endwith %}
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-light">
+        <tr><th>ID</th><th>Склад</th><th>Вход</th><th>Выход</th><th>Норматив, %</th><th>Потери, %</th><th>Активен</th><th>Примечание</th><th></th></tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.warehouse_name }}</td>
+          <td>{{ r.input_name }}</td>
+          <td>{{ r.output_name }}</td>
+          <td>{{ r.yield_pct }}</td>
+          <td>{{ r.loss_pct }}</td>
+          <td>{% if r.is_active %}✅{% else %}—{% endif %}</td>
+          <td style="max-width:280px">{{ r.note }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('recipes.edit', rid=r.id) }}">Изменить</a></td>
+        </tr>
+        {% else %}<tr><td colspan="9" class="text-center text-muted py-4">Пусто</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

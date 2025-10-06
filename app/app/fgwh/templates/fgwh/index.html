@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Склады готовой продукции</h3>
+
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-auto"><input type="text" class="form-control" name="q" value="{{ q }}" placeholder="Поиск: название / код / место"></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary" type="submit">Искать</button></div>
+    <div class="col-auto ms-auto">
+      <a href="{{ url_for('fgwh.export_csv') }}" class="btn btn-outline-secondary">Экспорт CSV</a>
+      <a href="{{ url_for('fgwh.create') }}" class="btn btn-primary">+ Новый склад</a>
+    </div>
+  </form>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="mb-3">
+        {% for cat, msg in messages %}
+          <div class="alert alert-{{ 'warning' if cat=='warning' else 'success' if cat=='success' else 'secondary' }} py-2 mb-2">{{ msg }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>ID</th><th>Название</th><th>Код</th><th>Локация</th><th>Активен</th><th>Примечание</th><th class="text-nowrap">Создан / Изменён</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td class="fw-medium">{{ r.name }}</td>
+          <td><code>{{ r.code }}</code></td>
+          <td>{{ r.location }}</td>
+          <td>{% if r.is_active %}✅{% else %}—{% endif %}</td>
+          <td style="max-width:280px">{{ r.note }}</td>
+          <td class="text-muted small">{{ r.created_at }}<br>{{ r.updated_at }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('fgwh.edit', rid=r.id) }}">Изменить</a>
+            <form action="{{ url_for('fgwh.delete', rid=r.id) }}" method="post" class="d-inline" onsubmit="return confirm('Удалить склад «{{ r.name }}»?');">
+              <button class="btn btn-sm btn-outline-danger" type="submit">Удалить</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">Пока нет ни одного склада. Создайте первый.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

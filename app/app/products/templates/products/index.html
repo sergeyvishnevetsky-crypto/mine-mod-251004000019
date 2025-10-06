@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">Продукция</h3>
+  <form class="row g-2 mb-3" method="get">
+    <div class="col-auto"><input name="q" class="form-control" value="{{ q }}" placeholder="Поиск: название/код"></div>
+    <div class="col-auto"><button class="btn btn-outline-secondary">Искать</button></div>
+    <div class="col-auto ms-auto">
+      <a href="{{ url_for('products.index') }}" class="btn btn-outline-secondary">Обновить</a>
+      <a href="{{ url_for('products.create') }}" class="btn btn-primary">+ Новый продукт</a>
+    </div>
+  </form>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for c,m in messages %}<div class="alert alert-{{ 'success' if c=='success' else 'warning' if c=='warning' else 'secondary' }} py-2">{{ m }}</div>{% endfor %}
+  {% endif %}
+  {% endwith %}
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-light"><tr>
+        <th>ID</th><th>Название</th><th>Код</th><th>Тип</th><th>Ед.</th><th>Активен</th><th>Примечание</th><th></th>
+      </tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td class="fw-medium">{{ r.name }}</td>
+          <td><code>{{ r.code }}</code></td>
+          <td>{{ r.type }}</td>
+          <td>{{ r.uom }}</td>
+          <td>{% if r.is_active %}✅{% else %}—{% endif %}</td>
+          <td style="max-width:280px">{{ r.note }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('products.edit', rid=r.id) }}">Изменить</a></td>
+        </tr>
+        {% else %}<tr><td colspan="8" class="text-center text-muted py-4">Пусто</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
