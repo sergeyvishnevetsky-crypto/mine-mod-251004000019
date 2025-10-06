@@ -19,10 +19,9 @@ REFS = {
     '3': ('Перечень услуг', 'pickers/services.html'),
     '4': ('Статьи доходов и расходов', 'pickers/revexp_items.html'),
     'fgwh': ('Склады готовой продукции', 'pickers/fgwh.html'),
+    'products': ('Номенклатура продукции', 'pickers/products.html'),
+    'recipes': ('Рецепты переработки', 'pickers/recipes.html'),
 }
-
-
-
 # Движение продукции — отдельная вкладка
 MOV = {
     'mov1': ('Движение продукции', 'pickers/movement.html'),
