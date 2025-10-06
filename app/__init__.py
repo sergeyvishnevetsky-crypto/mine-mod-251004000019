@@ -33,7 +33,8 @@ def create_app():
         ("app.workbook.routes", "workbook_bp", "/workbook"),
         ("app.mining_report.routes", "mining_bp", "/mining-report"),
         ("app.request_tmc.routes", "request_tmc_bp", "/requests/tmc"),
-        ("app.request_services.routes", "request_services_bp", "/requests/services"),
+        ("app.request_services.routes", "request_services_bp", "/requests/services"),        ("app.fg_warehouse", "fgwh_bp", "/fg-warehouse"),
+
     ]
 
     for module_path, attr, prefix in modules:
