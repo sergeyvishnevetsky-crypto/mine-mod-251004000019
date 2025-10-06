@@ -39,4 +39,6 @@ def create_app():
         app.logger.warning(f'product_metrics init failed: {e}')
 
     app.register_blueprint(revexp_bp, url_prefix="/dict/revexp-items")
-    return app
+        app.register_blueprint(prod_bp, url_prefix="/dict/prod-metrics")
+return app
+from .prod_metrics import prod_bp
