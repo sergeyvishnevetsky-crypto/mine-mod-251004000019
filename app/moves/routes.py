@@ -11,9 +11,11 @@ PCSV = os.path.join(BASE, "data", "products.csv")
 RCSV = os.path.join(BASE, "data", "recipes.csv")
 MCSV = os.path.join(BASE, "data", "moves.csv")
 
-M_FIELDS = ["id","date","doc_type","status","warehouse_id","warehouse_id_to",
-            "product_id","qty_in","qty_out","recipe_id","input_qty","output_qty",
-            "loss_qty","pair_id","note","author"]
+M_FIELDS = [
+    'id','date','doc_type','status','warehouse_id','warehouse_id_to',
+    'product_id','qty_in','qty_out','recipe_id','input_qty','output_qty',
+    'loss_qty','pair_id','note','author','batch_id','line_type','source_type','source_ref'
+]
 
 def _ensure_moves():
     os.makedirs(os.path.join(BASE, "data"), exist_ok=True)
@@ -83,6 +85,10 @@ def _write_moves(rows):
 
 def _next_id(rows): return (max([r["id"] for r in rows]) + 1) if rows else 1
 
+def _gen_batch_id(prefix="PRC"):
+    from datetime import datetime
+    return f"{prefix}-" + datetime.utcnow().strftime("%Y%m%d-%H%M%S-%f")[:-3]
+
 def _stock_until(dt_iso, warehouse_id, product_id):
     """остаток на дату/время по складу+продукту среди status=posted"""
     bal = 0.0
@@ -143,10 +149,76 @@ def process():
         wid = int(request.form.get("warehouse_id") or 0)
         pid_in = int(request.form.get("input_product_id") or 0)
         qty_in = float(request.form.get("input_qty") or 0)
-        recipe_id = int(request.form.get("recipe_id") or 0) if (request.form.get("recipe_id") or "").strip() else None
         note = (request.form.get("note") or "").strip()
+
         if not any(w["id"]==wid for w in ws_all):
-            flash("Склад не умеет перерабатывать", "warning"); return render_template("moves/process_form.html", ws=ws_all, ps=ps, rs=rs)
+            flash("Склад не умеет перерабатывать", "warning"); 
+            return render_template("moves/process_form.html", ws=ws_all, ps=ps, rs=rs)
+
+        if qty_in <= 0 or not pid_in:
+            flash("Укажите входной продукт и его количество (>0)", "warning");
+            return render_template("moves/process_form.html", ws=ws_all, ps=ps, rs=rs)
+
+        # Собираем выходы (множественные)
+        out_pids = request.form.getlist("out_pid")
+        out_qtys = request.form.getlist("out_qty")
+        outputs = []
+        for pid_str, q_str in zip(out_pids, out_qtys):
+            pid = int(pid_str or 0)
+            try:
+                q = float(q_str or 0)
+            except:
+                q = 0.0
+            if pid and q > 0:
+                outputs.append((pid, q))
+
+        if not outputs:
+            flash("Добавьте хотя бы одну фракцию выхода с количеством > 0", "warning")
+            return render_template("moves/process_form.html", ws=ws_all, ps=ps, rs=rs)
+
+        total_out = round(sum(q for _, q in outputs), 6)
+        if total_out > qty_in:
+            flash(f"Сумма выходов ({total_out}) не может превышать вход ({qty_in})", "warning")
+            return render_template("moves/process_form.html", ws=ws_all, ps=ps, rs=rs)
+
+        # проверка остатка входа
+        bal = _stock_until(date, wid, pid_in)
+        if bal < qty_in:
+            flash(f"Недостаточно входного продукта на складе (остаток {bal}, нужно {qty_in})", "warning")
+            return render_template("moves/process_form.html", ws=ws_all, ps=ps, rs=rs)
+
+        loss = round(qty_in - total_out, 6)
+        rows = _moves()
+        batch_id = _gen_batch_id()
+
+        # Списание входа
+        rows.append({
+            "id": _next_id(rows), "date": date, "doc_type":"process", "status":"posted",
+            "warehouse_id": wid, "warehouse_id_to":"", "product_id": pid_in,
+            "qty_in":"", "qty_out": qty_in, "recipe_id":"", "input_qty":qty_in, "output_qty":"", "loss_qty":"",
+            "pair_id":"", "note": note, "author":"", "batch_id": batch_id, "line_type":"in", "source_type":"", "source_ref":""
+        })
+        # Приход по всем фракциям
+        for pid_out, q_out in outputs:
+            rows.append({
+                "id": _next_id(rows), "date": date, "doc_type":"process", "status":"posted",
+                "warehouse_id": wid, "warehouse_id_to":"", "product_id": pid_out,
+                "qty_in": q_out, "qty_out":"", "recipe_id":"", "input_qty":"", "output_qty":q_out, "loss_qty":"",
+                "pair_id":"", "note": note, "author":"", "batch_id": batch_id, "line_type":"out", "source_type":"", "source_ref":""
+            })
+        # Потери (опционально пишем строкой, если > 0)
+        if loss > 0:
+            rows.append({
+                "id": _next_id(rows), "date": date, "doc_type":"process", "status":"posted",
+                "warehouse_id": wid, "warehouse_id_to":"", "product_id":"",
+                "qty_in":"", "qty_out": loss, "recipe_id":"", "input_qty":"", "output_qty":"", "loss_qty":loss,
+                "pair_id":"", "note": note, "author":"", "batch_id": batch_id, "line_type":"loss", "source_type":"", "source_ref":""
+            })
+
+        _write_moves(rows); flash("Переработка проведена","success")
+        return redirect(url_for("moves.index"))
+
+    return render_template("moves/process_form.html", ws=ws_all, ps=ps, rs=rs)
         # подобрать рецепт, если не указан
         recipe = None
         if recipe_id:

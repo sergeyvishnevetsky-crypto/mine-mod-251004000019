@@ -15,7 +15,7 @@
     <table class="table table-striped align-middle">
       <thead class="table-light">
         <tr>
-          <th>Дата</th><th>Тип</th><th>Склад</th><th>Продукт</th><th class="text-end">Приход</th><th class="text-end">Расход</th><th>Статус</th><th>Комментарий</th>
+          <th>Дата</th><th>Тип</th><th>Склад</th><th>Продукт</th><th class="text-end">Приход</th><th class="text-end">Расход</th><th>Статус</th><th>Пакет</th><th>Комментарий</th>
         </tr>
       </thead>
       <tbody>
@@ -27,7 +27,7 @@
           <td>{{ r.product_name }}</td>
           <td class="text-end">{{ r.qty_in or '' }}</td>
           <td class="text-end">{{ r.qty_out or '' }}</td>
-          <td>{{ r.status }}</td>
+          <td>{{ r.status }}</td><td>{{ r.batch_id or '' }}</td>
           <td style="max-width:280px">{{ r.note }}</td>
         </tr>
         {% else %}

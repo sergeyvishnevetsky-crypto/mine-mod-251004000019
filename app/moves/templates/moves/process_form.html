@@ -1,8 +1,15 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container py-4">
-  <h3 class="mb-3">Переработка</h3>
-  <form method="post" class="row g-3">
+  <h3 class="mb-3">Переработка (вход → фракции)</h3>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for c,m in messages %}<div class="alert alert-{{ 'success' if c=='success' else 'warning' if c=='warning' else 'secondary' }} py-2 mb-2">{{ m }}</div>{% endfor %}
+  {% endif %}
+  {% endwith %}
+
+  <form method="post" class="row g-3" id="procForm">
     <div class="col-md-4">
       <label class="form-label">Дата/время</label>
       <input name="date" class="form-control" placeholder="ISO8601 (пусто = сейчас)">
@@ -15,25 +22,119 @@
     </div>
     <div class="col-md-4">
       <label class="form-label">Входной продукт</label>
-      <select name="input_product_id" class="form-select">
+      <select name="input_product_id" class="form-select" id="inputPid">
         {% for p in ps %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
       </select>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
       <label class="form-label">Количество входа, т</label>
-      <input name="input_qty" type="number" step="0.000001" class="form-control" required>
+      <input name="input_qty" id="inputQty" type="number" step="0.000001" class="form-control" required>
     </div>
-    <div class="col-md-12">
-      <small class="text-muted d-block mb-1">Рецепт подставится по складу и входному продукту (активный).</small>
+
+    <div class="col-12">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <label class="form-label mb-0"><strong>Фракции (выходы)</strong></label>
+        <button class="btn btn-sm btn-outline-primary" type="button" id="addRowBtn">+ Добавить фракцию</button>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-striped align-middle" id="outTable">
+          <thead class="table-light">
+            <tr><th style="width:55%">Продукт фракции</th><th style="width:35%">Количество, т</th><th style="width:10%"></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <select name="out_pid" class="form-select">
+                  {% for p in ps %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+                </select>
+              </td>
+              <td><input name="out_qty" type="number" step="0.000001" class="form-control" value="0"></td>
+              <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger rmBtn">×</button></td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td class="text-end"><strong>Σ Выходов, т</strong></td>
+              <td><input id="sumOut" class="form-control" readonly></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td class="text-end"><strong>Потери, т (Вход − ΣВыходов)</strong></td>
+              <td><input id="loss" class="form-control" readonly></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
+
     <div class="col-md-12">
       <label class="form-label">Комментарий</label>
       <input name="note" class="form-control">
     </div>
+
     <div class="col-12 mt-2">
       <button class="btn btn-primary" type="submit">Провести</button>
       <a class="btn btn-outline-secondary" href="{{ url_for('moves.index') }}">Отмена</a>
     </div>
   </form>
 </div>
+
+<script>
+(function(){
+  const inputQty = document.getElementById('inputQty');
+  const table = document.getElementById('outTable');
+  const addBtn = document.getElementById('addRowBtn');
+  const sumOut = document.getElementById('sumOut');
+  const loss = document.getElementById('loss');
+
+  function recalc(){
+    let sum = 0;
+    table.querySelectorAll('tbody input[name="out_qty"]').forEach(el=>{
+      const v = parseFloat(el.value||'0'); if(!isNaN(v)) sum += v;
+    });
+    sumOut.value = (sum || 0).toFixed(6);
+    const inq = parseFloat(inputQty.value||'0');
+    const l = (isNaN(inq)?0:inq) - (sum||0);
+    loss.value = (l || 0).toFixed(6);
+  }
+  table.addEventListener('input', recalc);
+  inputQty.addEventListener('input', recalc);
+  recalc();
+
+  addBtn.addEventListener('click', ()=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>
+        <select name="out_pid" class="form-select">
+          ${document.querySelector('select[name="out_pid"]').innerHTML}
+        </select>
+      </td>
+      <td><input name="out_qty" type="number" step="0.000001" class="form-control" value="0"></td>
+      <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger rmBtn">×</button></td>
+    `;
+    table.querySelector('tbody').appendChild(tr);
+  });
+
+  table.addEventListener('click', (e)=>{
+    if(e.target.closest('.rmBtn')){
+      const rows = table.querySelectorAll('tbody tr');
+      if(rows.length>1){
+        e.target.closest('tr').remove();
+        recalc();
+      }
+    }
+  });
+
+  // финальная валидация перед submit
+  document.getElementById('procForm').addEventListener('submit', (e)=>{
+    recalc();
+    const inq = parseFloat(inputQty.value||'0');
+    const sum = parseFloat(sumOut.value||'0');
+    if(!(inq>0)){ e.preventDefault(); alert('Входное количество должно быть > 0'); return; }
+    if(sum<=0){ e.preventDefault(); alert('Добавьте хотя бы одну фракцию с количеством > 0'); return; }
+    if(sum>inq){ e.preventDefault(); alert('Σ выходов не может превышать вход'); return; }
+  });
+})();
+</script>
 {% endblock %}
