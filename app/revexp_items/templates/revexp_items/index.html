@@ -3,17 +3,14 @@
 {% block content %}
 <div class="container py-4">
   <h1 class="mb-3">Статьи доходов и расходов</h1>
-  <p class="text-muted">Единый формат: <code>код, тип, статья, ЦФО</code>.
-    Допускаются входные шаблоны «доходы» и «расходы» — конвертируем автоматически.</p>
+  <p class="text-muted">Единый формат: <code>код, тип, статья, ЦФО</code>. Можно грузить «доходы» или «расходы» — конвертируется автоматически.</p>
 
   <div class="card mb-3">
     <div class="card-body">
       <form id="uploadForm">
-        <div class="mb-2">
-          <input class="form-control" type="file" name="file" accept=".csv,.xlsx,.xlsm,.xls" required>
-        </div>
+        <input class="form-control mb-2" type="file" name="file" accept=".csv,.xlsx,.xlsm,.xls" required>
         <button class="btn btn-primary">Импортировать</button>
-        <a class="btn btn-outline-secondary" href="/dict/revexp-items/template.xlsx">Скачать шаблон XLSX</a>
+        <a class="btn btn-outline-secondary" href="/dict/revexp-items/template.xlsx">Шаблон XLSX</a>
       </form>
       <div id="result" class="mt-2 small text-muted"></div>
     </div>
@@ -25,16 +22,13 @@
     <a class="btn btn-outline-secondary" href="/dict/revexp-items/params">Параметры</a>
   </div>
 </div>
-
 <script>
 const form = document.getElementById('uploadForm');
 const result = document.getElementById('result');
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
-  const fd = new FormData(form);
-  const r = await fetch('/dict/revexp-items/import', { method: 'POST', body: fd });
-  const j = await r.json();
-  result.textContent = j.ok ? `✅ Загружено строк: ${j.rows}` : `❌ ${j.error || 'Ошибка'}`;
+  const r = await fetch('/dict/revexp-items/import', { method:'POST', body:new FormData(form) });
+  const j = await r.json(); result.textContent = j.ok ? `✅ Строк: ${j.rows}` : `❌ ${j.error||'Ошибка'}`;
 });
 </script>
 {% endblock %}
