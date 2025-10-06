@@ -1,16 +1,8 @@
-from flask import Blueprint, render_template, request, abort, redirect, url_for, flash
+# -*- coding: utf-8 -*-
+from flask import Blueprint, render_template, request, abort
 
 cabinet_bp = Blueprint("cabinet", __name__, template_folder="templates")
 
-# ===== СПРАВОЧНИКИ (вкладка refs) =====
-REFS = {
-    "1": ("Нормы и расценки",        "pickers/norms.html"),
-    "2": ("Перечень ТМЦ",             "pickers/tmc.html"),
-    "3": ("Перечень услуг",           "pickers/services.html"),
-    "4": ("Статьи доходов и расходов", "pickers/revexp_items.html"),
-}
-
-# ===== РАБОЧИЕ ДОКУМЕНТЫ (вкладка docs) =====
 DOCS = {
     "90": ("Отчёт о переработке",        "pickers/proc.html"),
     "91": ("Склад готовой продукции",     "pickers/fgwh.html"),
@@ -26,36 +18,38 @@ DOCS = {
     "9": ("Отчет об оказанных услугах",  "pickers/generic.html"),
 }
 
-def _items_for(tab:str):
-    return REFS if tab == "refs" else DOCS
+REFS = {
+    "1": ("Нормы и расценки",        "pickers/norms.html"),
+    "2": ("Перечень ТМЦ",             "pickers/tmc.html"),
+    "3": ("Перечень услуг",           "pickers/services.html"),
+    "4": ("Статьи доходов и расходов", "pickers/revexp_items.html"),
+}
 
-@cabinet_bp.get("/")
+# Движение продукции — отдельная вкладка
+MOV = {
+    "mov1": ("Движение продукции", "pickers/movement.html"),
+}
+
+# Карта вкладок и общий индекс
+TAB_MAP = {
+    "docs": DOCS,
+    "refs": REFS,
+    "moves": MOV,
+}
+ALL_MAP = {**DOCS, **REFS, **MOV}
+
+@cabinet_bp.route("/")
 def index():
-    tab = request.args.get("tab", "docs")  # 'docs' или 'refs'
-    ITEMS = _items_for(tab)
-    items = [{"key": k, "label": v[0]} for k, v in ITEMS.items()]
+    tab = request.args.get("tab", "docs")
+    items_map = TAB_MAP.get(tab, DOCS)
+    items = [{"key": k, "label": v[0], "tpl": v[1]} for k, v in sorted(items_map.items())]
     return render_template("cabinet.html", title="Кабинет участка", tab=tab, items=items)
 
-@cabinet_bp.get("/picker/<key>")
-def picker(key: str):
+@cabinet_bp.route("/picker/<key>")
+def picker(key):
     tab = request.args.get("tab", "docs")
-    ITEMS = _items_for(tab)
-    info = ITEMS.get(key)
-    if not info:
+    rec = ALL_MAP.get(key)
+    if not rec:
         abort(404)
-    label, tpl = info
-    # передаём текущую вкладку, чтобы после submit вернуться туда же
-    return render_template(tpl, key=key, label=label, tab=tab)
-
-@cabinet_bp.post("/run/<key>")
-def run_action(key: str):
-    tab = request.args.get("tab", "docs")
-    ITEMS = _items_for(tab)
-    if key not in ITEMS:
-        abort(404)
-    # пример чтения параметров формы
-    period = request.form.get("period", "")
-    site = request.form.get("site", "")
-    shift = request.form.get("shift", "")
-    flash(f"[{ 'Справочники' if tab=='refs' else 'Рабочие документы' }] {ITEMS[key][0]} → период={period}, участок={site}, смена={shift}", "ok")
-    return redirect(url_for("cabinet.index", tab=tab))
+    label, tpl = rec
+    return render_template(tpl, key=key, tab=tab, label=label)
