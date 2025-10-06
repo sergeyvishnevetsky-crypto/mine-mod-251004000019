@@ -18,7 +18,7 @@ REFS = {
     '2': ('Перечень ТМЦ', 'pickers/tmc.html'),
     '3': ('Перечень услуг', 'pickers/services.html'),
     '4': ('Статьи доходов и расходов', 'pickers/revexp_items.html'),
-    '5': ('Склады готовой продукции', 'pickers/fgwh.html'),
+    'fgwh': ('Склады готовой продукции', 'pickers/fgwh.html'),
 }
 
 
@@ -27,7 +27,6 @@ REFS = {
 MOV = {
     'mov1': ('Движение продукции', 'pickers/movement.html'),
     '90': ('Отчёт о переработке', 'pickers/proc.html'),
-    '91': ('Склад готовой продукции', 'pickers/fgwh.html'),
     '5': ('Отчет о добыче', 'pickers/report_mining.html'),
     '6': ('Отчет об отгрузке', 'pickers/generic.html'),
     '8': ('Баланс товара', 'pickers/generic.html'),
@@ -52,7 +51,16 @@ def index():
 @cabinet_bp.route("/picker/<key>")
 def picker(key):
     tab = request.args.get("tab", "docs")
-    rec = ALL_MAP.get(key)
+    tab = (tab or "docs").strip().lower()
+    TAB_MAP = {
+        "docs": DOCS,
+        "refs": REFS,
+        "moves": MOV,
+    }
+    items_map = TAB_MAP.get(tab)
+    if not items_map:
+        abort(404)
+    rec = items_map.get(key) or items_map.get(str(key))
     if not rec:
         abort(404)
     label, tpl = rec
