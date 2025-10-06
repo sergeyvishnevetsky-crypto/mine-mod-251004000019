@@ -25,10 +25,13 @@ except Exception as _e:
 # --- [/auto-fix] ---
 
 try:
+    pass
 except Exception as _e:
     # Лог ошибки при импорте блюпринта не валит приложение
 
+    pass
 try:
+    pass
 except Exception as _e:
     pass
 
