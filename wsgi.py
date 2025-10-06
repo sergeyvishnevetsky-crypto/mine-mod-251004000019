@@ -35,3 +35,4 @@ try:
     from app.fgwh import bp as fgwh_bp  # noqa: F401
     app.register_blueprint(fgwh_bp)     # доступно по /fgwh/
 except Exception as _e:
+    pass
