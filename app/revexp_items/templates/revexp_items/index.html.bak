@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+
+  <h2 class="mb-2">Статьи доходов и расходов</h2>
+  <p class="text-muted">
+    Единый формат импорта/экспорта: <code>код</code>, <code>тип</code>, <code>статья</code>, <code>цфо</code>.
+    Тип: <code>доход</code> или <code>расход</code>. Остальные поля можно не заполнять — они опциональны.
+  </p>
+
+  <!-- Кнопки действий -->
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <form class="d-flex gap-2" action="" method="post" enctype="multipart/form-data">
+      <input class="form-control" type="file" name="file" accept=".csv,.xlsx">
+      <button class="btn btn-primary" type="submit">Импортировать</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('revexp_items.template_xlsx') }}">
+        Шаблон XLSX
+      </a>
+    </form>
+  </div>
+
+  <!-- Панель параметров -->
+  <details class="mb-3">
+    <summary class="h6 mb-2">Параметры отображения</summary>
+    <form class="row g-2 mt-1" method="get" action="">
+      <div class="col-12 col-md-3">
+        <label class="form-label">Тип</label>
+        <select class="form-select" name="type">
+          <option value="">Все</option>
+          <option value="доход" {{ 'selected' if request.args.get('type') == 'доход' else '' }}>Доход</option>
+          <option value="расход" {{ 'selected' if request.args.get('type') == 'расход' else '' }}>Расход</option>
+        </select>
+      </div>
+      <div class="col-12 col-md-5">
+        <label class="form-label">Поиск</label>
+        <input class="form-control" type="text" name="q" value="{{ request.args.get('q','') }}"
+               placeholder="Код, статья или ЦФО…">
+      </div>
+      <div class="col-12 col-md-4 d-flex align-items-end gap-2">
+        <button class="btn btn-outline-primary" type="submit">Применить</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('revexp_items.index') }}">Сброс</a>
+      </div>
+    </form>
+  </details>
+
+  <!-- Таб/Дерево переключатель (пока табличное представление) -->
+  <ul class="nav nav-pills mb-3">
+    <li class="nav-item"><span class="nav-link active">Таблица</span></li>
+  </ul>
+
+  <!-- Таблица -->
+  <div class="table-responsive">
+    <table class="table table-sm align-middle">
+      <thead>
+        <tr>
+          <th style="width: 120px;">Код</th>
+          <th style="width: 120px;">Тип</th>
+          <th>Статья</th>
+          <th style="width: 220px;">ЦФО</th>
+          <th style="width: 1%; white-space: nowrap;">НДС?</th>
+          <th style="width: 1%; white-space: nowrap;">Статус</th>
+          <th style="width: 1%"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in items or [] %}
+        <tr>
+          <td><code>{{ row.code }}</code></td>
+          <td>{{ row.type }}</td>
+          <td>{{ row.name }}</td>
+          <td>{{ row.cfo }}</td>
+          <td>{{ row.vat or '' }}</td>
+          <td>{{ row.status or '' }}</td>
+          <td class="text-end">
+            <!-- заглушки под действия -->
+            <a class="btn btn-sm btn-outline-secondary disabled" href="#" aria-disabled="true">Изм.</a>
+            <a class="btn btn-sm btn-outline-danger disabled" href="#" aria-disabled="true">Удал.</a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="text-muted">
+            Данных пока нет. Загрузите их через «Импортировать» или скачайте <a href="{{ url_for('revexp_items.template_xlsx') }}">шаблон</a>.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Экспорт -->
+  <div class="d-flex gap-2 mt-3">
+    <a class="btn btn-success" href="{{ url_for('revexp_items.export_csv') }}">Экспорт CSV</a>
+    <a class="btn btn-success" href="{{ url_for('revexp_items.export_xlsx') }}">Экспорт XLSX</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('revexp_items.params') }}">Параметры (JSON)</a>
+  </div>
+
+</div>
+{% endblock %}
