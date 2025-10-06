@@ -33,7 +33,8 @@ def create_app():
         ("app.workbook.routes", "workbook_bp", "/workbook"),
         ("app.mining_report.routes", "mining_bp", "/mining-report"),
         ("app.request_tmc.routes", "request_tmc_bp", "/requests/tmc"),
-        ("app.request_services.routes", "request_services_bp", "/requests/services"),        ("app.fg_warehouse", "fgwh_bp", "/fg-warehouse"),
+        ("app.request_services.routes", "request_services_bp", "/requests/services"),        ("app.fg_warehouse", "fgwh_bp", "/fg-warehouse"),        ("app.processing_report", "proc_bp", "/processing-report"),
+
 
     ]
 
