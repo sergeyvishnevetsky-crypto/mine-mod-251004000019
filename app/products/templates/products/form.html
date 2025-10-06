@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">{{ 'Новый продукт' if mode=='create' else 'Редактирование продукта' }}</h3>
+  <form method="post" class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Название</label>
+      <input name="name" class="form-control" value="{{ rec.name or '' }}" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Код</label>
+      <input name="code" class="form-control" value="{{ rec.code or '' }}" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Тип</label>
+      <select name="type" class="form-select">
+        {% for v,l in [('raw','Сырьё'),('processed','Готовая'),('byproduct','Побочный')] %}
+        <option value="{{ v }}" {% if rec.type==v %}selected{% endif %}>{{ l }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Единица</label>
+      <input name="uom" class="form-control" value="{{ rec.uom or 't' }}">
+    </div>
+    <div class="col-md-12">
+      <label class="form-label">Примечание</label>
+      <textarea name="note" class="form-control" rows="2">{{ rec.note or '' }}</textarea>
+    </div>
+    <div class="col-md-3 form-check ms-2 mt-2">
+      <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if rec.is_active in (True,'1','true','on') %}checked{% endif %}>
+      <label for="is_active" class="form-check-label">Активный</label>
+    </div>
+    <div class="col-12 mt-2">
+      <button class="btn btn-primary" type="submit">Сохранить</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('products.index') }}">Отмена</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
