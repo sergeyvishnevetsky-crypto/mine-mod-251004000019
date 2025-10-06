@@ -42,3 +42,4 @@ def create_app():
         app.register_blueprint(prod_bp, url_prefix="/dict/prod-metrics")
 return app
 from .prod_metrics import prod_bp
+from .product_metrics import product_metrics_bp
