@@ -14,3 +14,12 @@ except Exception:
     app.config['SECRET_KEY'] = _os.environ.get('SECRET_KEY') or 'qwerty123'
 # --- [/auto] ---
 
+# --- [auto-fix] ensure SECRET_KEY at the very end of module ---
+try:
+    import os as _os
+    if not app.config.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = _os.environ.get('SECRET_KEY') or 'qwerty123'
+except Exception as _e:
+    # last resort: if app not yet defined or something odd, just ignore
+    pass
+# --- [/auto-fix] ---
