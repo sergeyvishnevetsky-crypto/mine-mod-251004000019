@@ -23,3 +23,11 @@ except Exception as _e:
     # last resort: if app not yet defined or something odd, just ignore
     pass
 # --- [/auto-fix] ---
+
+# === auto-register fgwh blueprint ===
+try:
+    from fgwh import bp as fgwh_bp  # noqa
+    app.register_blueprint(fgwh_bp)  # доступно по /fgwh/
+except Exception as _e:
+    # Лог ошибки при импорте блюпринта не валит приложение
+    print("fgwh blueprint register error:", _e)

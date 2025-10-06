@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h3 class="mb-3">{{ TITLE }}</h3>
+
+  <div class="d-flex gap-2 mb-3">
+    <a class="btn btn-outline-primary" href="{{ url_for('fgwh.export_csv') }}">Экспорт CSV</a>
+    <form class="d-inline-flex gap-2" method="post" action="{{ url_for('fgwh.import_csv') }}" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".csv" required class="form-control">
+      <button class="btn btn-primary" type="submit">Импорт CSV</button>
+    </form>
+  </div>
+
+  <form class="row g-2 mb-4" method="post" action="{{ url_for('fgwh.create_warehouse') }}">
+    <div class="col-2"><input class="form-control" name="code" placeholder="Код" required></div>
+    <div class="col-3"><input class="form-control" name="name" placeholder="Наименование" required></div>
+    <div class="col-3"><input class="form-control" name="address" placeholder="Адрес"></div>
+    <div class="col-2"><input class="form-control" name="responsible" placeholder="Ответственный"></div>
+    <div class="col-1"><input class="form-control" name="capacity_tons" placeholder="т"></div>
+    <div class="col-1 form-check mt-2"><input class="form-check-input" type="checkbox" name="active" checked> Активен</div>
+    <div class="col-12"><input class="form-control" name="note" placeholder="Примечание"></div>
+    <div class="col-12"><button class="btn btn-success" type="submit">Добавить склад</button></div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-sm table-striped align-middle">
+      <thead>
+        <tr>
+          <th>ID</th><th>Код</th><th>Наименование</th><th>Адрес</th><th>Ответственный</th><th>Вместимость, т</th><th>Активен</th><th>Примечание</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for r in rows %}
+        <tr>
+          <td>{{ r.id }}</td>
+          <td>{{ r.code }}</td>
+          <td>{{ r.name }}</td>
+          <td>{{ r.address or '' }}</td>
+          <td>{{ r.responsible or '' }}</td>
+          <td>{{ r.capacity_tons or '' }}</td>
+          <td>{{ 'Да' if r.active else 'Нет' }}</td>
+          <td>{{ r.note or '' }}</td>
+          <td>
+            <form class="d-inline" method="post" action="{{ url_for('fgwh.delete_warehouse', pk=r.id) }}" onsubmit="return confirm('Удалить?')">
+              <button class="btn btn-sm btn-outline-danger">✕</button>
+            </form>
+          </td>
+        </tr>
+        <tr>
+          <td colspan="9">
+            <form class="row g-2" method="post" action="{{ url_for('fgwh.update_warehouse', pk=r.id) }}">
+              <div class="col-2"><input class="form-control" name="code" value="{{ r.code }}"></div>
+              <div class="col-3"><input class="form-control" name="name" value="{{ r.name }}"></div>
+              <div class="col-3"><input class="form-control" name="address" value="{{ r.address or '' }}"></div>
+              <div class="col-2"><input class="form-control" name="responsible" value="{{ r.responsible or '' }}"></div>
+              <div class="col-1"><input class="form-control" name="capacity_tons" value="{{ r.capacity_tons or '' }}"></div>
+              <div class="col-1 form-check mt-2"><input class="form-check-input" type="checkbox" name="active" {% if r.active %}checked{% endif %}> Активен</div>
+              <div class="col-12"><input class="form-control" name="note" value="{{ r.note or '' }}"></div>
+              <div class="col-12"><button class="btn btn-primary btn-sm" type="submit">Сохранить</button></div>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
