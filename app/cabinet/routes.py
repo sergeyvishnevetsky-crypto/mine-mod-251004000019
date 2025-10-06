@@ -23,8 +23,8 @@ REFS = {
     'recipes': ('Рецепты переработки', 'pickers/recipes.html'),
 }
 # Движение продукции — отдельная вкладка
-MOV = {
-    'mov1': ('Движение продукции', 'pickers/movement.html'),
+MOV = {    'journal': ('Журнал движения продукции', 'pickers/moves_journal.html'),
+
     '90': ('Отчёт о переработке', 'pickers/proc.html'),
     '5': ('Отчет о добыче', 'pickers/report_mining.html'),
     '6': ('Отчет об отгрузке', 'pickers/generic.html'),
