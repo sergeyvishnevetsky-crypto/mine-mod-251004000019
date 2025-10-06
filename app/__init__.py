@@ -33,13 +33,13 @@ def create_app():
         from .product_metrics import bp as product_metrics_bp, compat_bp as product_metrics_compat_bp
         if 'product_metrics' not in app.blueprints:
             app.register_blueprint(product_metrics_bp, url_prefix="/dict/product-metrics")
-        if 'product_metrics_compat' not in app.blueprints:
+
             app.register_blueprint(product_metrics_compat_bp, url_prefix="/dict/r")
     except Exception as e:
         app.logger.warning(f'product_metrics init failed: {e}')
 
     app.register_blueprint(revexp_bp, url_prefix="/dict/revexp-items")
-        app.register_blueprint(prod_bp, url_prefix="/dict/prod-metrics")
+
 return app
 from .prod_metrics import prod_bp
 from .product_metrics import product_metrics_bp
