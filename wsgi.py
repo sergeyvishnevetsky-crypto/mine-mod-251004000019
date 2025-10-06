@@ -24,15 +24,17 @@ except Exception as _e:
     pass
 # --- [/auto-fix] ---
 
-# === auto-register fgwh blueprint ===
 try:
-    app.register_blueprint(fgwh_bp)  # доступно по /fgwh/
 except Exception as _e:
     # Лог ошибки при импорте блюпринта не валит приложение
 
-# === auto-register fgwh blueprint (fixed path) ===
 try:
-    from app.fgwh import bp as fgwh_bp  # noqa: F401
-    app.register_blueprint(fgwh_bp)     # доступно по /fgwh/
 except Exception as _e:
     pass
+
+# === fgwh blueprint registration (canonical) ===
+try:
+    from app.fgwh import bp as fgwh_bp
+    app.register_blueprint(fgwh_bp)  # /fgwh/
+except Exception as e:
+    print("fgwh register error:", e)
