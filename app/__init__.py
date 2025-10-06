@@ -1,3 +1,4 @@
+from app.cost_items import bp as cost_items_bp
 from flask import Flask
 from .main.routes import main_bp
 from .employees.routes import employees_bp
@@ -10,6 +11,7 @@ from .workbook.routes import workbook_bp
 from .mining_report.routes import mining_bp
 from .request_tmc.routes import request_tmc_bp
 from .request_services.routes import request_services_bp
+from .revexp_items import revexp_bp
 def create_app():
     app=Flask(__name__)
     app.config["SECRET_KEY"]="change-me"
@@ -36,4 +38,5 @@ def create_app():
     except Exception as e:
         app.logger.warning(f'product_metrics init failed: {e}')
 
+    app.register_blueprint(revexp_bp, url_prefix="/dict/revexp-items")
     return app
