@@ -6,7 +6,7 @@ from datetime import datetime
 bp = Blueprint("fgwh", __name__, template_folder="templates")
 
 CSV_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "fgwh.csv")
-CSV_FIELDS = ["id","name","code","location","is_active","note","created_at","updated_at"]
+CSV_FIELDS = ['id', 'name', 'code', 'location', 'is_active', 'note', 'created_at', 'updated_at', 'can_receive_raw', 'can_process', 'can_ship', 'can_transfer']
 
 def _ensure_csv():
     os.makedirs(os.path.dirname(CSV_PATH), exist_ok=True)
@@ -18,23 +18,41 @@ def _ensure_csv():
 def _read_all():
     _ensure_csv()
     rows = []
+    import csv
     with open(CSV_PATH, newline="", encoding="utf-8") as f:
-        for i, row in enumerate(csv.DictReader(f)):
-            # приведение типов
-            row["id"] = int(row["id"])
-            row["is_active"] = (row.get("is_active") == "1")
+        reader = csv.DictReader(f)
+        for row in reader:
+            # приведение типов и заполнение дефолтов
+            row = {k: row.get(k, "") for k in CSV_FIELDS}
+            try:
+                row["id"] = int(row["id"])
+            except Exception:
+                row["id"] = 0
+            row["is_active"] = (str(row.get("is_active","0")) in ("1","true","True","on"))
+            for k in ("can_receive_raw","can_process","can_ship","can_transfer"):
+                row[k] = (str(row.get(k,"0")) in ("1","true","True","on"))
             rows.append(row)
-    rows.sort(key=lambda r: (0 if r["is_active"] else 1, r["name"].lower()))
+    rows.sort(key=lambda r: (0 if r["is_active"] else 1, (r.get("name") or "").lower()))
     return rows
 
 def _write_all(rows):
-    with open(CSV_PATH, "w", newline="", encoding="utf-8") as f:
+    import csv, os
+    tmp = CSV_PATH + ".tmp"
+    with open(tmp, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         w.writeheader()
         for r in rows:
             r = r.copy()
             r["is_active"] = "1" if r.get("is_active") in (True,"1","true","on") else "0"
+            for k in ("can_receive_raw","can_process","can_ship","can_transfer"):
+                r[k] = "1" if r.get(k) in (True,"1","true","on") else "0"
+            # нормализация пустых полей
+            for k in CSV_FIELDS:
+                if r.get(k) is None:
+                    r[k] = ""
             w.writerow(r)
+    import os
+    os.replace(tmp, CSV_PATH)
 
 def _next_id(rows):
     return (max([r["id"] for r in rows]) + 1) if rows else 1
@@ -59,6 +77,10 @@ def create():
             "location": request.form.get("location","").strip(),
             "is_active": "1" if request.form.get("is_active") else "0",
             "note": request.form.get("note","").strip(),
+            "can_receive_raw": "1" if request.form.get("can_receive_raw") else "0",
+            "can_process": "1" if request.form.get("can_process") else "0",
+            "can_ship": "1" if request.form.get("can_ship") else "0",
+            "can_transfer": "1" if request.form.get("can_transfer") else "0",
             "created_at": now,
             "updated_at": now,
         }
@@ -84,6 +106,10 @@ def edit(rid: int):
         rec["location"] = request.form.get("location","").strip()
         rec["is_active"] = "1" if request.form.get("is_active") else "0"
         rec["note"] = request.form.get("note","").strip()
+        rec["can_receive_raw"] = "1" if request.form.get("can_receive_raw") else "0"
+        rec["can_process"] = "1" if request.form.get("can_process") else "0"
+        rec["can_ship"] = "1" if request.form.get("can_ship") else "0"
+        rec["can_transfer"] = "1" if request.form.get("can_transfer") else "0"
         rec["updated_at"] = datetime.utcnow().isoformat(timespec="seconds")
         if not rec["name"]:
             flash("Укажите название склада", "warning")

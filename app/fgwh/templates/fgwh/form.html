@@ -19,7 +19,27 @@
     <div class="col-md-12">
       <label class="form-label">Примечание</label>
       <textarea name="note" class="form-control" rows="3">{{ rec.note or '' }}</textarea>
+    
+    <div class="col-12">
+      <label class="form-label">Возможности склада</label>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="can_receive_raw" name="can_receive_raw" {% if rec.can_receive_raw in (True,'1','true','on') %}checked{% endif %}>
+        <label for="can_receive_raw" class="form-check-label">Принимать добычу</label>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="can_process" name="can_process" {% if rec.can_process in (True,'1','true','on') %}checked{% endif %}>
+        <label for="can_process" class="form-check-label">Перерабатывать</label>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="can_ship" name="can_ship" {% if rec.can_ship in (True,'1','true','on') %}checked{% endif %}>
+        <label for="can_ship" class="form-check-label">Отгружать</label>
+      </div>
+      <div class="form-check">
+        <input type="checkbox" class="form-check-input" id="can_transfer" name="can_transfer" {% if rec.can_transfer in (True,'1','true','on') %}checked{% endif %}>
+        <label for="can_transfer" class="form-check-label">Перевод между складами</label>
+      </div>
     </div>
+
     <div class="col-md-3 form-check ms-2 mt-2">
       <input type="checkbox" class="form-check-input" id="is_active" name="is_active" {% if rec.is_active in (True,'1','true','on') %}checked{% endif %}>
       <label for="is_active" class="form-check-label">Активный</label>
