@@ -33,6 +33,7 @@ def create_app():
         ("app.fgwh.routes", "bp", "/fgwh"),
         ("app.products.routes", "bp", "/products"),
         ("app.recipes.routes", "bp", "/recipes"),
+        ("app.moves.routes", "bp", "/moves"),
         ("app.workbook.routes", "workbook_bp", "/workbook"),
         ("app.mining_report.routes", "mining_bp", "/mining-report"),
         ("app.request_tmc.routes", "request_tmc_bp", "/requests/tmc"),
