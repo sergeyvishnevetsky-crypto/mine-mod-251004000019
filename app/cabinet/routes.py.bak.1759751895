@@ -14,12 +14,13 @@ DOCS = {
 
 
 REFS = {
-    '1': ('Нормы и расценки', 'pickers/norms.html'),
-    '2': ('Перечень ТМЦ', 'pickers/tmc.html'),
-    '3': ('Перечень услуг', 'pickers/services.html'),
-    '4': ('Статьи доходов и расходов', 'pickers/revexp_items.html'),
-}
 
+    "1": ("Нормы и расценки",        "pickers/norms.html"),
+    "2": ("Перечень ТМЦ",             "pickers/tmc.html"),
+    "3": ("Перечень услуг",           "pickers/services.html"),
+    "4": ("Статьи доходов и расходов", "pickers/revexp_items.html"),
+    'revexp_items': ('Статьи доходов и расходов', 'pickers/revexp_items.html'),
+}
 
 
 # Движение продукции — отдельная вкладка
