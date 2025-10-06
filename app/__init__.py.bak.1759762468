@@ -30,7 +30,6 @@ def create_app():
         ("app.cost_items", "bp", "/dict/cost-items"),
 
         # Прочее
-        ("app.fgwh", "bp", "/fgwh"),
         ("app.workbook.routes", "workbook_bp", "/workbook"),
         ("app.mining_report.routes", "mining_bp", "/mining-report"),
         ("app.request_tmc.routes", "request_tmc_bp", "/requests/tmc"),

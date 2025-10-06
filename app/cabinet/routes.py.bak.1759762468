@@ -18,7 +18,6 @@ REFS = {
     '2': ('Перечень ТМЦ', 'pickers/tmc.html'),
     '3': ('Перечень услуг', 'pickers/services.html'),
     '4': ('Статьи доходов и расходов', 'pickers/revexp_items.html'),
-    '5': ('Склады готовой продукции', 'pickers/fgwh.html'),
 }
 
 
