@@ -3,20 +3,49 @@
 <h3 class="mb-3">{{ title }}</h3>
 
 <ul class="nav nav-tabs mb-3">
-  <li class="nav-item">
-    <a class="nav-link {{ 'active' if tab=='docs' else '' }}" href="{{ url_for('cabinet.index', tab='docs') }}">Рабочие документы</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {{ 'active' if tab=='refs' else '' }}" href="{{ url_for('cabinet.index', tab='refs') }}">Справочники</a>
-  </li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab=='docs' }}" href="{{ url_for('cabinet.index', tab='docs') }}">Рабочие документы</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab=='refs' }}" href="{{ url_for('cabinet.index', tab='refs') }}">Справочники</a></li>
 </ul>
 
 <div class="row g-3">
+      
+      </div>
+
+      
+      </div>
+
+      
+        </div>
+      </div>
+
+      
+        </div>
+      </div>
+
+      
+      </div>
+      
+      </div>
+      
+      </div>
+
+      
+      </div>
+
+      
+      </div>
+
+      
+      </div>
+
+      
+      </div>
+
+      
+      </div>
+
   {% for it in items %}
-  <div class="col-md-3">
-    <div class="card h-100">
-      <div class="card-body d-flex flex-column">
-        <div class="fw-semibold mb-2">{{ it.label }}</div>
+  
         <div class="text-secondary small mb-3">Открыть параметры и сформировать.</div>
         <div class="mt-auto">
           <button class="btn btn-primary w-100 js-open-picker"
@@ -31,30 +60,32 @@
   {% endfor %}
 </div>
 
-<!-- Modal -->
+<!-- Универсальная модалка -->
 <div class="modal fade" id="pickerModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-scrollable modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="pickerTitle">Параметры</h5>
+        <h5 class="modal-title" id="pickerTitle">Выбор параметров</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
-      <div class="modal-body" id="pickerBody"></div>
+      <div class="modal-body" id="pickerBody">
+        <div class="text-center text-secondary py-5">Загрузка…</div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
-document.addEventListener('click', async (e) => {
-  const btn = e.target.closest('.js-open-picker');
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest(".js-open-picker");
   if (!btn) return;
-  const key = btn.dataset.key;
   const url = btn.dataset.url;
-  const modalEl = document.getElementById('pickerModal');
-  const bodyEl  = document.getElementById('pickerBody');
-  const titleEl = document.getElementById('pickerTitle');
+  const key = btn.dataset.key;
+  const modalEl = document.getElementById("pickerModal");
+  const bodyEl  = document.getElementById("pickerBody");
+  const titleEl = document.getElementById("pickerTitle");
   bodyEl.innerHTML = '<div class="text-center text-secondary py-5">Загрузка…</div>';
-  titleEl.textContent = 'Параметры • ' + (btn.closest('.card').querySelector('.fw-semibold')?.textContent ?? key);
+  titleEl.textContent = 'Параметры • ' + (btn.closest(".card").querySelector(".fw-semibold")?.textContent ?? key);
   try {
     const html = await fetch(url, { headers: { "X-Requested-With":"fetch" }}).then(r => r.text());
     bodyEl.innerHTML = html;
