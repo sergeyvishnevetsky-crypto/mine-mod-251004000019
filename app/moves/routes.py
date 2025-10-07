@@ -68,3 +68,13 @@ def pending_action():
     # act ∈ {"accept","discard"} — пока без побочных эффектов (мягкий прототип)
     flash("Действие обработано" if act in ("accept","discard") else "Нет действия", "ok")
     return redirect(url_for("moves.index"))
+
+@bp.get("/receipt")
+def receipt():
+    """Форма приёма (заглушка: только рендер шаблона)."""
+    return render_template("moves/receipt_form.html")
+
+@bp.get("/process")
+def process():
+    """Форма переработки (заглушка: только рендер шаблона)."""
+    return render_template("moves/process_form.html")
