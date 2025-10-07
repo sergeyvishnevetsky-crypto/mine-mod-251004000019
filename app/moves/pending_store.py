@@ -75,7 +75,7 @@ def _ensure_file():
             ]
             for r in demo: w.writerow(r)
 
-def list_rows(warehouse="Шахта", status="pending"):
+def list_rows(warehouse="Шахта", status="pending", mining_url: str | None = None):
     # base manual rows
     _ensure_file()
     manual = []
@@ -103,6 +103,30 @@ def total_qty(rows):
         return 0.0
 
 def bulk_update(ids, op):
+    # если пришли id из mining-адаптера, материализуем их в manual CSV,
+    # чтобы не задваивать из отчёта
+    from csv import DictWriter
+    virt_to_add = []
+    for vid in list(ids):
+        if str(vid).startswith('MR-'):
+            virt = next((r for r in _load_mining_csv() if r['id']==vid), None)
+            if not virt:
+                for r in load_mining_from_url(''):
+                    if r['id']==vid: virt=r; break
+            if virt:
+                vc = dict(virt)
+                vc['status'] = 'accepted' if op=='accept' else 'canceled'
+                virt_to_add.append(vc)
+    if virt_to_add:
+        _ensure_file()
+        import csv
+        with open(DATA_PATH, newline='', encoding='utf-8') as f:
+            curr = list(csv.DictReader(f))
+        curr.extend(virt_to_add)
+        with open(DATA_PATH, 'w', newline='', encoding='utf-8') as f:
+            w = DictWriter(f, fieldnames=FIELDS); w.writeheader()
+            for r in curr: w.writerow(r)
+    # обычная смена статусов для manual-строк ниже
     _ensure_file()
     changed=0
     rows=[]
@@ -121,3 +145,37 @@ def bulk_update(ids, op):
         w = csv.DictWriter(f, fieldnames=FIELDS); w.writeheader()
         for r in rows: w.writerow(r)
     return changed
+
+
+def load_mining_from_url(url: str):
+    """Скачать /mining-report/export.csv и вернуть список виртуальных pending-строк."""
+    import csv, io, urllib.request
+    if not url:
+        return []
+    try:
+        with urllib.request.urlopen(url, timeout=10) as resp:
+            data = resp.read()
+        text = data.decode("utf-8", errors="replace")
+        rdr = csv.DictReader(io.StringIO(text))
+        rows = []
+        for i, r in enumerate(rdr, start=1):
+            qty = _mining_qty(r)
+            if qty <= 0:
+                continue
+            dt = r.get("Дата") or r.get("date") or r.get("DT") or ""
+            rows.append({
+                "id": f"MR-{dt}-{i}",
+                "dt": f"{dt} 00:00",
+                "shift": r.get("Смена") or r.get("shift") or "",
+                "warehouse": "Шахта",
+                "product": _mining_product(r),
+                "qty": f"{qty}",
+                "unit": "т",
+                "source": "mining",
+                "doc": "Отчёт о добыче",
+                "note": r.get("Качество") or r.get("quality") or "",
+                "status": "pending",
+            })
+        return rows
+    except Exception:
+        return []

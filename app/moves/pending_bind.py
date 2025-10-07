@@ -16,9 +16,14 @@ def _inject_pending_to_moves_index():
 
 # Маршрут действий над pending (на том же префиксе /moves)
 @moves_bp.route("/pending_action", methods=["POST"])
-def pending_action():
-    ids = request.form.getlist("ids")
-    op  = request.form.get("op")
-    if ids and op in ("accept","cancel"):
+def pending_action():  # pending_action_safe
+    try:
+        ids = request.form.getlist('ids')
+        op  = request.form.get('op')
+        if not ids or op not in ('accept','cancel'):
+            return redirect(url_for('moves.index'))
         bulk_update(ids, op)
-    return redirect(url_for("moves.index"))
+    except Exception:
+        # не валим страницу — просто возвращаемся в журнал
+        pass
+    return redirect(url_for('moves.index'))
