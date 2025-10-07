@@ -3,7 +3,7 @@
 def _register_moves(app):
     try:
         from app.moves import routes as _moves_routes
-        register_bp_once(app, _moves_routes.bp, \"/moves\")
+        register_bp_once(app, _moves_routes.bp, "/moves")
         app.logger.info("moves blueprint registered")
     except Exception as e:
         # не проглатываем тихо — логируем, чтобы не было 404 незаметно
