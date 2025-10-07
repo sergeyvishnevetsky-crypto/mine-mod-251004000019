@@ -99,7 +99,8 @@ def _stock_until(dt_iso, warehouse_id, product_id):
 def index():
     # -- inject pending rows for Шахта --
     try:
-        from .pending_store import list_rows, total_qty, debug_counts
+        from .pending_source import fetch_from_export, mark_processed
+from .pending_store import list_rows, total_qty, debug_counts
         _pending_mining_url = url_for('mining_report.export_csv', _external=True)
         _pending_mining_url = (request.url_root.rstrip('/') + '/mining-report/export.csv')
         _pending_rows = list_rows(warehouse="Шахта", status="pending", mining_url=_pending_mining_url)
