@@ -100,7 +100,8 @@ def index():
     # -- inject pending rows for Шахта --
     try:
         from .pending_store import list_rows, total_qty
-        _pending_rows = list_rows(warehouse="Шахта", status="pending")
+        _pending_mining_url = url_for('mining_report.export_csv', _external=True)
+        _pending_rows = list_rows(warehouse="Шахта", status="pending", mining_url=_pending_mining_url)
         _pending_total = total_qty(_pending_rows)
     except Exception:
         _pending_rows = []
