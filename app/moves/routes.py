@@ -118,7 +118,7 @@ def index():
         r["warehouse_to_name"] = ws.get(m.get("warehouse_id_to") or 0,{}).get("name","") if m.get("warehouse_id_to") else ""
         r["product_name"] = ps.get(m.get("product_id") or 0,{}).get("name","") if m.get("product_id") else ""
         rows.append(r)
-    return render_template("moves/index.html", rows=rows, pending_rows=_pending_rows, pending_total=_pending_total, pending_dbg=_pending_dbg, pending_dbg=_pending_dbg)
+    return render_template("moves/index.html", rows=rows, pending_rows=_pending_rows, pending_total=_pending_total, pending_dbg=_pending_dbg)
 
 @bp.route("/receipt", methods=["GET","POST"])
 def receipt():
