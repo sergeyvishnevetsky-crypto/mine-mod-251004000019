@@ -1,3 +1,15 @@
+
+# --- stable registration for moves blueprint ---
+def _register_moves(app):
+    try:
+        from app.moves import routes as _moves_routes
+        app.register_blueprint(_moves_routes.bp, url_prefix="/moves")
+        app.logger.info("moves blueprint registered")
+    except Exception as e:
+        # не проглатываем тихо — логируем, чтобы не было 404 незаметно
+        app.logger.error("moves register error: %s", e)
+        raise
+
 from flask import Flask
 
 def _safe_import(module_path, attr=None):
@@ -14,8 +26,16 @@ def _safe_import(module_path, attr=None):
         return None
 
 def create_app():
+    # ensure /moves is registered
+    from flask import current_app as _ca
+
     app = Flask(__name__)
 
+    # stable moves registration
+    try:
+        _register_moves(app)
+    except Exception:
+        pass
     modules = [
         ("app.main.routes", "main_bp", None),
         ("app.cabinet.routes", "cabinet_bp", "/cabinet"),
