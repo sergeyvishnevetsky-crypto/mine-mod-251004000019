@@ -14,7 +14,6 @@ def _inline_fetch_from_csv(base_url: str):
         i = 0
         for r in rdr:
             i += 1
-            # qty = fact_total (если пусто — сумма fact_s1..s4)
             def _num(x):
                 try:
                     return float(str(x).replace(",", ".").strip())
@@ -23,9 +22,8 @@ def _inline_fetch_from_csv(base_url: str):
             qty = _num(r.get("fact_total")) or (_num(r.get("fact_s1")) + _num(r.get("fact_s2")) + _num(r.get("fact_s3")) + _num(r.get("fact_s4")))
             if qty <= 0:
                 continue
-            rid = f"MR-{i}-{r.get('date','')}"
             rows.append({
-                "id": rid,
+                "id": f"MR-{i}-{(r.get('date') or '').strip()}",
                 "date": (r.get("date") or "").strip(),
                 "product_name": (r.get("fraction") or "").strip(),
                 "fraction": (r.get("fraction") or "").strip(),
@@ -39,27 +37,22 @@ def _inline_fetch_from_csv(base_url: str):
     return rows, dbg
 
 def _load_pending(base_url: str):
-    """Best-effort: сначала пробуем app.moves.pending_source, иначе inline CSV."""
-    # Попытка использовать кастомный источник, если он есть
+    """Best-effort: сначала пробуем app.moves.pending_source, иначе — CSV fallback."""
     try:
         from app.moves import pending_source as ps
-        if hasattr(ps, "merge_refresh"):
-            rows, dbg = ps.merge_refresh(base_url); dbg = dict(dbg or {}); dbg["src"] = "merge_refresh"
-            return rows, dbg
-        if hasattr(ps, "fetch_pending_from_mining"):
-            rows, dbg = ps.fetch_pending_from_mining(base_url); dbg = dict(dbg or {}); dbg["src"] = "fetch_pending_from_mining"
-            return rows, dbg
-        if hasattr(ps, "refresh_pending"):
-            rows, dbg = ps.refresh_pending(base_url); dbg = dict(dbg or {}); dbg["src"] = "refresh_pending"
-            return rows, dbg
-    except Exception as e:
-        # Падает импорт? пойдём во встроенный CSV-парсер.
+        for name in ("merge_refresh", "fetch_pending_from_mining", "refresh_pending"):
+            fn = getattr(ps, name, None)
+            if callable(fn):
+                rows, dbg = fn(base_url)
+                dbg = dict(dbg or {})
+                dbg["src"] = name
+                return rows, dbg
+    except Exception:
         pass
-    # Fallback: тянем напрямую CSV отчёта
     return _inline_fetch_from_csv(base_url)
 
 def _consume_pending(row_id: str, act: str):
-    """Best-effort: зовём pending_source.consume, если есть; иначе тихо игнорируем."""
+    """Если есть pending_source.consume — вызываем, иначе игнорируем."""
     try:
         from app.moves import pending_source as ps
         if hasattr(ps, "consume"):
@@ -69,7 +62,7 @@ def _consume_pending(row_id: str, act: str):
 
 @bp.get("/")
 def index():
-    rows = []  # основной журнал пока не используем
+    rows = []  # основной журнал
     pending_rows, pending_dbg = _load_pending(request.url_root)
     try:
         pending_total = sum(float(x.get("qty") or 0) for x in pending_rows)

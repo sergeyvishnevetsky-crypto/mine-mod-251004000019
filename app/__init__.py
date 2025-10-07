@@ -3,7 +3,7 @@
 def _register_moves(app):
     try:
         from app.moves import routes as _moves_routes
-        app.register_blueprint(_moves_routes.bp, url_prefix="/moves")
+        register_bp_once(app, _moves_routes.bp, \"/moves\")
         app.logger.info("moves blueprint registered")
     except Exception as e:
         # не проглатываем тихо — логируем, чтобы не было 404 незаметно
@@ -65,14 +65,26 @@ def create_app():
     for module_path, attr, prefix in modules:
         bp = _safe_import(module_path, attr)
         if bp:
-            app.register_blueprint(bp, url_prefix=prefix)
+            register_bp_once(app, bp, prefix)
 
     return app
 
 # --- auto-registered by script: moves blueprint ---
 try:
     from app.moves.routes import bp as moves_bp
-    app.register_blueprint(moves_bp, url_prefix="/moves")
+    register_bp_once(app, moves_bp, url_prefix="/moves")
 except Exception as e:
     print("moves register error:", e)
 # --- end moves blueprint block ---
+
+
+def register_bp_once(app, bp, prefix=None):
+    """Регистрирует блюпринт только если его имя ещё не зарегистрировано."""
+    try:
+        name = getattr(bp, "name", None) or getattr(bp, "blueprint", getattr(bp, "__name__", ""))
+        if name and name in app.blueprints:
+            # уже есть — молча выходим
+            return
+    except Exception:
+        pass
+    register_bp_once(app, bp, prefix)
