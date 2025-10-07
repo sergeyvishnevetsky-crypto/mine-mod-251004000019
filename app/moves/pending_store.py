@@ -3,6 +3,65 @@ import os, csv, datetime as _dt
 DATA_PATH = os.environ.get("PENDING_CSV_PATH", "data/pending_mine_output.csv")
 FIELDS = ["id","dt","shift","warehouse","product","qty","unit","source","doc","note","status"]
 
+MINING_PATH = "data/mining_report.csv"
+def _read_csv_rows(path, fields_expected=None):
+    import csv, os
+    if not os.path.exists(path):
+        return []
+    with open(path, newline="", encoding="utf-8") as f:
+        rdr = csv.DictReader(f)
+        rows = [ {k.strip(): (v.strip() if isinstance(v,str) else v) for k,v in r.items()} for r in rdr ]
+    return rows
+
+def _try_float(x):
+    try:
+        return float(str(x).replace(',', '.'))
+    except Exception:
+        return 0.0
+
+def _mining_qty(row):
+    # Пытаемся взять "Факт/сутки" или сумму "Факт I..IV"
+    for key in ("Факт/сутки","Факт сут","Факт за сутки","fact_day","fact_per_day"):
+        if key in row and str(row[key]).strip():
+            return _try_float(row[key])
+    total = 0.0
+    for k in row.keys():
+        ks = k.strip()
+        if ks.lower().startswith("факт ") or ks.lower().startswith("fact "):
+            total += _try_float(row[k])
+    return total
+
+def _mining_product(row):
+    # Продукт берём из "Фракция" если есть, иначе дефолт
+    for key in ("Фракция","Фракция/марка","fraction","grade"):
+        if key in row and row[key].strip():
+            return row[key].strip()
+    return "Сырец ДГ"
+
+def _load_mining_csv():
+    rows = _read_csv_rows(MINING_PATH)
+    out = []
+    for i, r in enumerate(rows, start=1):
+        dt = r.get("Дата") or r.get("date") or r.get("DT") or ""
+        qty = _mining_qty(r)
+        if qty <= 0:
+            continue
+        out.append({
+            "id": f"MR-{dt}-{i}",
+            "dt": f"{dt} 00:00",
+            "shift": r.get("Смена") or r.get("shift") or "",
+            "warehouse": "Шахта",
+            "product": _mining_product(r),
+            "qty": f"{qty}",
+            "unit": "т",
+            "source": "mining",
+            "doc": "Отчёт о добыче",
+            "note": r.get("Качество") or r.get("quality") or "",
+            "status": "pending",
+        })
+    return out
+
+
 def _ensure_file():
     if not os.path.exists(DATA_PATH):
         os.makedirs(os.path.dirname(DATA_PATH), exist_ok=True)
@@ -17,12 +76,24 @@ def _ensure_file():
             for r in demo: w.writerow(r)
 
 def list_rows(warehouse="Шахта", status="pending"):
+    # base manual rows
     _ensure_file()
-    out=[]
+    manual = []
+    import csv
     with open(DATA_PATH, newline="", encoding="utf-8") as f:
-        for r in csv.DictReader(f):
-            if (not warehouse or r.get("warehouse")==warehouse) and (not status or r.get("status")==status):
-                out.append(r)
+        manual = list(csv.DictReader(f))
+    # filter manual
+    man_filtered = [r for r in manual if (not warehouse or r.get("warehouse")==warehouse) and (not status or r.get("status")==status)]
+    # mining virtual rows
+    mining = _load_mining_csv()
+    # выкидываем те mining-id, которые уже материализованы в manual (любой статус, чтобы не задваивать)
+    man_ids = {r.get("id") for r in manual}
+    mining = [r for r in mining if r["id"] not in man_ids]
+    # итоговый список: сначала mining, затем manual (pending)
+    out = []
+    if status == "pending":
+        out.extend([r for r in mining if (not warehouse or r.get("warehouse")==warehouse)])
+    out.extend(man_filtered)
     return out
 
 def total_qty(rows):
