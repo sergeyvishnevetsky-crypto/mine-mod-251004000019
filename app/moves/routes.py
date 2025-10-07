@@ -2,6 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from datetime import date
 from .pending_source import fetch_pending_from_mining, consume
 
+from app.moves.pending_source import merge_refresh, consume, debug_snapshot
+
 bp = Blueprint("moves", __name__, template_folder="templates")
 
 # Простое хранилище «журнала» в памяти процесса dyno
