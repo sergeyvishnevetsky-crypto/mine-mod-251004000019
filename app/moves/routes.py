@@ -1,17 +1,19 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
+from datetime import date
 from .pending_source import fetch_pending_from_mining
 
 bp = Blueprint("moves", __name__, template_folder="templates")
 
+# Простое хранилище «журнала» в памяти процесса dyno
+# Элемент: {date, doc_type, warehouse_name, product_name, qty_in, qty_out, status, note}
+MOVES: list[dict] = []
+
 @bp.get("/")
 def index():
-    # основная таблица пока пустая — заполняем только «нераспределённую добычу»
-    rows = []
-
+    rows = list(MOVES)  # показываем накопленные движения
     base = request.url_root
     pending_rows, pending_dbg = fetch_pending_from_mining(base)
     pending_total = sum((r.get("qty") or 0) for r in pending_rows)
-
     return render_template(
         "moves/index.html",
         rows=rows,
@@ -20,7 +22,6 @@ def index():
         pending_dbg=pending_dbg,
     )
 
-# страницы-оболочки уже используются шаблоном
 @bp.get("/receipt")
 def receipt():
     return render_template("moves/receipt_form.html")
@@ -32,11 +33,35 @@ def process():
 @bp.post("/pending_action")
 def pending_action():
     act = (request.form.get("act") or "").strip().lower()  # accept|discard
-    # прототип: просто сообщение и назад в журнал
+    ids = set(request.form.getlist("ids"))
+
+    if not ids:
+        flash("Не выбрано ни одной строки.", "warning")
+        return redirect(url_for("moves.index"))
+
+    # Тянем актуальные pending-строки (stateless)
+    base = request.url_root
+    pending_rows, _dbg = fetch_pending_from_mining(base)
+    pick = [r for r in pending_rows if str(r.get("id")) in ids]
+
     if act == "accept":
-        flash("Выбранные записи приняты на склад (прототип).", "success")
+        added = 0
+        for r in pick:
+            MOVES.append({
+                "date": r.get("date") or date.today().isoformat(),
+                "doc_type": "Приём",
+                "warehouse_name": "Шахта",
+                "product_name": r.get("product_name") or "Добыча",
+                "qty_in": float(r.get("qty") or 0),
+                "qty_out": "",
+                "status": "Готово",
+                "note": (r.get("note") or "") + " (из отчёта о добыче)",
+            })
+            added += 1
+        flash(f"Принято на склад: {added} строк(и).", "success")
     elif act == "discard":
-        flash("Выбранные записи списаны (прототип).", "warning")
+        flash(f"Списано (прототип): {len(pick)} строк(и).", "warning")
     else:
         flash("Действие не выбрано.", "secondary")
+
     return redirect(url_for("moves.index"))
