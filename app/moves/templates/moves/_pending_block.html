@@ -1,58 +1,56 @@
 <div class="container pb-4">
-  <div class="card border-2 border-warning-subtle">
+  <div class="card border-warning">
     <div class="card-header bg-warning-subtle d-flex justify-content-between align-items-center">
-      <div>
-        <strong>Нераспределённая добыча</strong> — <span class="badge text-bg-secondary">Склад: Шахта</span>
-      </div>
-      <div class="text-muted small">
-        Всего к принятию: <strong>{{ "%.2f"|format(pending_total or 0) }}</strong> т
-      </div>
+      <strong>Нераспределённая добыча</strong>
+      <span class="text-muted small">
+        Источник: {{ (pending_dbg.src if pending_dbg else 'n/a') }}
+        {% if pending_dbg and pending_dbg.get('csv') %}
+          (http_ok={{ pending_dbg.csv.http_ok }}, csv_rows={{ pending_dbg.csv.count }})
+        {% endif %}
+      </span>
     </div>
     <div class="card-body p-0">
-      <form method="post" action="{{ url_for('moves.pending_action') }}">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-warning">
-              <tr>
-                <th style="width:34px;"><input class="form-check-input" type="checkbox" onclick="for(const c of document.querySelectorAll('.js-pick')) c.checked=this.checked"></th>
-                <th>Дата</th>
-                <th>Продукт</th>
-                <th class="text-end">Кол-во</th>
-                <th style="width:60px;">Ед.</th>
-                <th>Источник</th>
-                <th>Док</th>
-                <th>Прим.</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for r in pending_rows %}
-              <tr>
-                <td><input class="form-check-input js-pick" type="checkbox" name="ids" value="{{ r.id }}"></td>
-                <td class="text-nowrap">{{ r.date }}</td>
-                <td>{{ r.product_name }}</td>
-                <td class="text-end">{{ "%.1f"|format(r.qty or 0) }}</td>
-                <td>{{ r.unit or "т" }}</td>
-                <td>{{ r.source or "" }}</td>
-                <td>{{ r.doc or "" }}</td>
-                <td>{{ r.note or "" }}</td>
-              </tr>
-              {% else %}
-              <tr><td colspan="8" class="text-center text-muted py-3">Нет данных из отчёта о добыче</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <div class="p-3 d-flex gap-2">
-          <button class="btn btn-success" name="act" value="accept" type="submit">Принять на склад</button>
-          <button class="btn btn-outline-danger" name="act" value="discard" type="submit">Списать</button>
-        </div>
-      </form>
-      {% if pending_dbg and pending_dbg.err %}
-      <div class="alert alert-warning m-3 py-2">
-        <div class="small">Источник: {{ pending_dbg.url }}</div>
-        <div class="small">Ошибка: {{ pending_dbg.err }}</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Дата</th><th>Продукт</th><th class="text-end">Количество</th><th>Ед.</th><th>Примечание</th><th style="width:180px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in pending_rows %}
+            <tr>
+              <td class="text-nowrap">{{ r.date }}</td>
+              <td>{{ r.product_name }}</td>
+              <td class="text-end">{{ '%.3f'|format(r.qty|float) }}</td>
+              <td>{{ r.unit }}</td>
+              <td style="max-width:300px">{{ r.note }}</td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('moves.pending_action') }}" class="d-inline">
+                  <input type="hidden" name="id"  value="{{ r.id }}">
+                  <input type="hidden" name="act" value="accept">
+                  <button class="btn btn-sm btn-success">Принять на склад</button>
+                </form>
+                <form method="post" action="{{ url_for('moves.pending_action') }}" class="d-inline ms-1">
+                  <input type="hidden" name="id"  value="{{ r.id }}">
+                  <input type="hidden" name="act" value="discard">
+                  <button class="btn btn-sm btn-outline-secondary">Списать</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-3">Нет записей</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="2" class="text-end">Итого к принятию:</th>
+              <th class="text-end">{{ '%.3f'|format(pending_total|float) }}</th>
+              <th colspan="3"></th>
+            </tr>
+          </tfoot>
+        </table>
       </div>
-      {% endif %}
     </div>
   </div>
 </div>
