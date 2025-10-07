@@ -99,9 +99,10 @@ def _stock_until(dt_iso, warehouse_id, product_id):
 def index():
     # -- inject pending rows for Шахта --
     try:
-        from .pending_store import list_rows, total_qty
+        from .pending_store import list_rows, total_qty, debug_counts
         _pending_mining_url = url_for('mining_report.export_csv', _external=True)
         _pending_rows = list_rows(warehouse="Шахта", status="pending", mining_url=_pending_mining_url)
+        _pending_dbg = debug_counts(mining_url=_pending_mining_url)
         _pending_total = total_qty(_pending_rows)
     except Exception:
         _pending_rows = []
@@ -115,7 +116,7 @@ def index():
         r["warehouse_to_name"] = ws.get(m.get("warehouse_id_to") or 0,{}).get("name","") if m.get("warehouse_id_to") else ""
         r["product_name"] = ps.get(m.get("product_id") or 0,{}).get("name","") if m.get("product_id") else ""
         rows.append(r)
-    return render_template("moves/index.html", rows=rows, pending_rows=_pending_rows, pending_total=_pending_total)
+    return render_template("moves/index.html", rows=rows, pending_rows=_pending_rows, pending_total=_pending_total, pending_dbg=_pending_dbg)
 
 @bp.route("/receipt", methods=["GET","POST"])
 def receipt():

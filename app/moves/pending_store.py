@@ -20,22 +20,29 @@ def _try_float(x):
         return 0.0
 
 def _mining_qty(row):
-    # Пытаемся взять "Факт/сутки" или сумму "Факт I..IV"
-    for key in ("Факт/сутки","Факт сут","Факт за сутки","fact_day","fact_per_day"):
+    # 1) Явный total
+    for key in ("Факт/сутки","Факт сут","Факт за сутки","fact_day","fact_per_day","fact_total"):
         if key in row and str(row[key]).strip():
-            return _try_float(row[key])
+            try:
+                return float(str(row[key]).replace(",", "."))
+            except Exception:
+                pass
+    # 2) Сумма смен: Факт I..IV или fact_s1..fact_s4
     total = 0.0
     for k in row.keys():
-        ks = k.strip()
-        if ks.lower().startswith("факт ") or ks.lower().startswith("fact "):
-            total += _try_float(row[k])
+        ks = k.strip().lower()
+        if ks.startswith("факт "):
+            try: total += float(str(row[k]).replace(",", "."))
+            except Exception: pass
+        if ks in ("fact_s1","fact_s2","fact_s3","fact_s4"):
+            try: total += float(str(row[k]).replace(",", "."))
+            except Exception: pass
     return total
 
 def _mining_product(row):
-    # Продукт берём из "Фракция" если есть, иначе дефолт
     for key in ("Фракция","Фракция/марка","fraction","grade"):
-        if key in row and row[key].strip():
-            return row[key].strip()
+        if key in row and str(row[key]).strip():
+            return str(row[key]).strip()
     return "Сырец ДГ"
 
 def _load_mining_csv():
@@ -48,12 +55,12 @@ def _load_mining_csv():
             continue
         out.append({
             "id": f"MR-{dt}-{i}",
-            "dt": f"{dt} 00:00",
+            "dt": f"{(r.get("date") or r.get("Дата") or dt)} 00:00",
             "shift": r.get("Смена") or r.get("shift") or "",
             "warehouse": "Шахта",
             "product": _mining_product(r),
             "qty": f"{qty}",
-            "unit": "т",
+            "unit": (r.get("unit") or "т"),
             "source": "mining",
             "doc": "Отчёт о добыче",
             "note": r.get("Качество") or r.get("quality") or "",
@@ -103,30 +110,43 @@ def total_qty(rows):
         return 0.0
 
 def bulk_update(ids, op):
-    # если пришли id из mining-адаптера, материализуем их в manual CSV,
-    # чтобы не задваивать из отчёта
-    from csv import DictWriter
-    virt_to_add = []
-    for vid in list(ids):
-        if str(vid).startswith('MR-'):
-            virt = next((r for r in _load_mining_csv() if r['id']==vid), None)
-            if not virt:
-                for r in load_mining_from_url(''):
-                    if r['id']==vid: virt=r; break
-            if virt:
-                vc = dict(virt)
-                vc['status'] = 'accepted' if op=='accept' else 'canceled'
-                virt_to_add.append(vc)
-    if virt_to_add:
-        _ensure_file()
-        import csv
-        with open(DATA_PATH, newline='', encoding='utf-8') as f:
-            curr = list(csv.DictReader(f))
-        curr.extend(virt_to_add)
-        with open(DATA_PATH, 'w', newline='', encoding='utf-8') as f:
-            w = DictWriter(f, fieldnames=FIELDS); w.writeheader()
-            for r in curr: w.writerow(r)
-    # обычная смена статусов для manual-строк ниже
+    # материализация MR-* (если есть) и безопасная смена статусов
+    try:
+        from csv import DictWriter
+        virt_to_add = []
+        # материализация MR-* из файл/URL
+        try:
+            mining_all = _load_mining_csv()
+        except Exception:
+            mining_all = []
+        def find_mr(vid):
+            for r in mining_all:
+                if r.get("id")==vid:
+                    return r
+            return None
+        for vid in list(ids):
+            if str(vid).startswith("MR-"):
+                virt = find_mr(vid)
+                if virt:
+                    vc = dict(virt)
+                    vc["status"] = "accepted" if op=="accept" else "canceled"
+                    virt_to_add.append(vc)
+        if virt_to_add:
+            _ensure_file()
+            import csv
+            with open(DATA_PATH, newline="", encoding="utf-8") as f:
+                curr = list(csv.DictReader(f))
+            curr.extend(virt_to_add)
+            with open(DATA_PATH, "w", newline="", encoding="utf-8") as f:
+                w = DictWriter(f, fieldnames=FIELDS); w.writeheader()
+                for r in curr: w.writerow(r)
+        # обычная смена статусов для manual-строк ниже
+    except Exception:
+        pass
+
+    except Exception:
+        pass
+
     _ensure_file()
     changed=0
     rows=[]
@@ -165,12 +185,12 @@ def load_mining_from_url(url: str):
             dt = r.get("Дата") or r.get("date") or r.get("DT") or ""
             rows.append({
                 "id": f"MR-{dt}-{i}",
-                "dt": f"{dt} 00:00",
+                "dt": f"{(r.get("date") or r.get("Дата") or dt)} 00:00",
                 "shift": r.get("Смена") or r.get("shift") or "",
                 "warehouse": "Шахта",
                 "product": _mining_product(r),
                 "qty": f"{qty}",
-                "unit": "т",
+                "unit": (r.get("unit") or "т"),
                 "source": "mining",
                 "doc": "Отчёт о добыче",
                 "note": r.get("Качество") or r.get("quality") or "",
@@ -179,3 +199,24 @@ def load_mining_from_url(url: str):
         return rows
     except Exception:
         return []
+
+
+def debug_counts(mining_url=None):
+    man, mfile, mhttp = 0, 0, 0
+    try:
+        _ensure_file()
+        import csv
+        with open(DATA_PATH, newline="", encoding="utf-8") as f:
+            man = sum(1 for _ in csv.DictReader(f))
+    except Exception:
+        man = -1
+    try:
+        mfile = len(_load_mining_csv())
+    except Exception:
+        mfile = -1
+    if mining_url:
+        try:
+            mhttp = len(load_mining_from_url(mining_url))
+        except Exception:
+            mhttp = -1
+    return {"manual": man, "mining_file": mfile, "mining_http": mhttp}
