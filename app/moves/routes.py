@@ -97,6 +97,14 @@ def _stock_until(dt_iso, warehouse_id, product_id):
 
 @bp.route("/")
 def index():
+    # -- inject pending rows for Шахта --
+    try:
+        from .pending_store import list_rows, total_qty
+        _pending_rows = list_rows(warehouse="Шахта", status="pending")
+        _pending_total = total_qty(_pending_rows)
+    except Exception:
+        _pending_rows = []
+        _pending_total = 0.0
     ws = {w["id"]: w for w in _warehouses()}
     ps = {p["id"]: p for p in _products()}
     rows = []
@@ -106,7 +114,7 @@ def index():
         r["warehouse_to_name"] = ws.get(m.get("warehouse_id_to") or 0,{}).get("name","") if m.get("warehouse_id_to") else ""
         r["product_name"] = ps.get(m.get("product_id") or 0,{}).get("name","") if m.get("product_id") else ""
         rows.append(r)
-    return render_template("moves/index.html", rows=rows)
+    return render_template("moves/index.html", rows=rows, pending_rows=_pending_rows, pending_total=_pending_total)
 
 @bp.route("/receipt", methods=["GET","POST"])
 def receipt():
