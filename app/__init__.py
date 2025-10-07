@@ -48,3 +48,11 @@ def create_app():
             app.register_blueprint(bp, url_prefix=prefix)
 
     return app
+
+# --- auto-registered by script: moves blueprint ---
+try:
+    from app.moves.routes import bp as moves_bp
+    app.register_blueprint(moves_bp, url_prefix="/moves")
+except Exception as e:
+    print("moves register error:", e)
+# --- end moves blueprint block ---
