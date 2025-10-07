@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from datetime import date
-from .pending_source import fetch_pending_from_mining
+from .pending_source import fetch_pending_from_mining, consume
 
 bp = Blueprint("moves", __name__, template_folder="templates")
 
@@ -45,6 +45,7 @@ def pending_action():
     pick = [r for r in pending_rows if str(r.get("id")) in ids]
 
     if act == "accept":
+        consume(list(ids), "accept")
         added = 0
         for r in pick:
             MOVES.append({
@@ -60,6 +61,7 @@ def pending_action():
             added += 1
         flash(f"Принято на склад: {added} строк(и).", "success")
     elif act == "discard":
+        consume(list(ids), "discard")
         flash(f"Списано (прототип): {len(pick)} строк(и).", "warning")
     else:
         flash("Действие не выбрано.", "secondary")
