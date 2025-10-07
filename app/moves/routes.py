@@ -101,7 +101,9 @@ def index():
     try:
         from .pending_store import list_rows, total_qty, debug_counts
         _pending_mining_url = url_for('mining_report.export_csv', _external=True)
+        _pending_mining_url = (request.url_root.rstrip('/') + '/mining-report/export.csv')
         _pending_rows = list_rows(warehouse="Шахта", status="pending", mining_url=_pending_mining_url)
+        _pending_dbg = debug_counts(mining_url=_pending_mining_url)
         _pending_dbg = debug_counts(mining_url=_pending_mining_url)
         _pending_total = total_qty(_pending_rows)
     except Exception:
@@ -116,7 +118,7 @@ def index():
         r["warehouse_to_name"] = ws.get(m.get("warehouse_id_to") or 0,{}).get("name","") if m.get("warehouse_id_to") else ""
         r["product_name"] = ps.get(m.get("product_id") or 0,{}).get("name","") if m.get("product_id") else ""
         rows.append(r)
-    return render_template("moves/index.html", rows=rows, pending_rows=_pending_rows, pending_total=_pending_total, pending_dbg=_pending_dbg)
+    return render_template("moves/index.html", rows=rows, pending_rows=_pending_rows, pending_total=_pending_total, pending_dbg=_pending_dbg, pending_dbg=_pending_dbg)
 
 @bp.route("/receipt", methods=["GET","POST"])
 def receipt():
@@ -192,3 +194,16 @@ def process():
         _write_moves(rows); flash("Переработка проведена","success")
         return redirect(url_for("moves.index"))
     return render_template("moves/process_form.html", ws=ws_all, ps=ps, rs=rs)
+
+
+@bp.post("/pending_action")
+def pending_action():
+    try:
+        ids = request.form.getlist("ids")
+        op  = request.form.get("op")
+        if not ids or op not in ("accept","cancel"):
+            return redirect(url_for("moves.index"))
+        bulk_update(ids, op)
+    except Exception:
+        pass
+    return redirect(url_for("moves.index"))
