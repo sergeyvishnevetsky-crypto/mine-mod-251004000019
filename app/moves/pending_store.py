@@ -20,23 +20,24 @@ def _try_float(x):
         return 0.0
 
 def _mining_qty(row):
-    # 1) Явный total
+    # 1) Явное поле итога
     for key in ("Факт/сутки","Факт сут","Факт за сутки","fact_day","fact_per_day","fact_total"):
-        if key in row and str(row[key]).strip():
+        v = row.get(key)
+        if v is not None and str(v).strip() != "":
             try:
-                return float(str(row[key]).replace(",", "."))
+                return float(str(v).replace(",", "."))
             except Exception:
                 pass
     # 2) Сумма смен: Факт I..IV или fact_s1..fact_s4
     total = 0.0
-    for k in row.keys():
-        ks = k.strip().lower()
+    for k, v in row.items():
+        ks = str(k).strip().lower()
         if ks.startswith("факт "):
-            try: total += float(str(row[k]).replace(",", "."))
-            except Exception: pass
+            try: total += float(str(v).replace(",", ".")); 
+            except: pass
         if ks in ("fact_s1","fact_s2","fact_s3","fact_s4"):
-            try: total += float(str(row[k]).replace(",", "."))
-            except Exception: pass
+            try: total += float(str(v).replace(",", ".")); 
+            except: pass
     return total
 
 def _mining_product(row):
@@ -83,21 +84,24 @@ def _ensure_file():
             for r in demo: w.writerow(r)
 
 def list_rows(warehouse="Шахта", status="pending", mining_url: str | None = None):
-    # base manual rows
     _ensure_file()
-    manual = []
     import csv
     with open(DATA_PATH, newline="", encoding="utf-8") as f:
         manual = list(csv.DictReader(f))
-    # filter manual
     man_filtered = [r for r in manual if (not warehouse or r.get("warehouse")==warehouse) and (not status or r.get("status")==status)]
-    # mining virtual rows
-    mining = _load_mining_csv()
-    # выкидываем те mining-id, которые уже материализованы в manual (любой статус, чтобы не задваивать)
+    mining = []
+    try:
+        mining = _load_mining_csv()
+    except Exception:
+        mining = []
+    if mining_url:
+        try:
+            mining.extend(load_mining_from_url(mining_url))
+        except Exception:
+            pass
     man_ids = {r.get("id") for r in manual}
-    mining = [r for r in mining if r["id"] not in man_ids]
-    # итоговый список: сначала mining, затем manual (pending)
-    out = []
+    mining = [r for r in mining if r.get("id") not in man_ids]
+    out=[]
     if status == "pending":
         out.extend([r for r in mining if (not warehouse or r.get("warehouse")==warehouse)])
     out.extend(man_filtered)
@@ -110,27 +114,21 @@ def total_qty(rows):
         return 0.0
 
 def bulk_update(ids, op):
-    # материализация MR-* (если есть) и безопасная смена статусов
     try:
         from csv import DictWriter
-        virt_to_add = []
-        # материализация MR-* из файл/URL
+        virt_to_add=[]
         try:
-            mining_all = _load_mining_csv()
+            base = _load_mining_csv()
         except Exception:
-            mining_all = []
-        def find_mr(vid):
-            for r in mining_all:
-                if r.get("id")==vid:
-                    return r
-            return None
+            base = []
+        by_id = {r.get("id"): r for r in base}
         for vid in list(ids):
-            if str(vid).startswith("MR-"):
-                virt = find_mr(vid)
-                if virt:
-                    vc = dict(virt)
-                    vc["status"] = "accepted" if op=="accept" else "canceled"
-                    virt_to_add.append(vc)
+            vid=str(vid)
+            if vid.startswith("MR-"):
+                r = by_id.get(vid)
+                if r:
+                    rc=dict(r); rc["status"] = "accepted" if op=="accept" else "canceled"
+                    virt_to_add.append(rc)
         if virt_to_add:
             _ensure_file()
             import csv
@@ -140,83 +138,17 @@ def bulk_update(ids, op):
             with open(DATA_PATH, "w", newline="", encoding="utf-8") as f:
                 w = DictWriter(f, fieldnames=FIELDS); w.writeheader()
                 for r in curr: w.writerow(r)
-        # обычная смена статусов для manual-строк ниже
-    except Exception:
-        pass
-
-    except Exception:
-        pass
-
-    _ensure_file()
-    changed=0
-    rows=[]
-    with open(DATA_PATH, newline="", encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
-    by_id = {r["id"]: r for r in rows}
-    for i in ids:
-        r = by_id.get(i)
-        if not r: continue
-        if op=="accept" and r["status"]=="pending":
-            r["status"]="accepted"; changed+=1
-        elif op=="cancel" and r["status"]=="pending":
-            r["status"]="canceled"; changed+=1
-    # перезапись
-    with open(DATA_PATH, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS); w.writeheader()
-        for r in rows: w.writerow(r)
-    return changed
-
-
-def load_mining_from_url(url: str):
-    """Скачать /mining-report/export.csv и вернуть список виртуальных pending-строк."""
-    import csv, io, urllib.request
-    if not url:
-        return []
-    try:
-        with urllib.request.urlopen(url, timeout=10) as resp:
-            data = resp.read()
-        text = data.decode("utf-8", errors="replace")
-        rdr = csv.DictReader(io.StringIO(text))
-        rows = []
-        for i, r in enumerate(rdr, start=1):
-            qty = _mining_qty(r)
-            if qty <= 0:
-                continue
-            dt = r.get("Дата") or r.get("date") or r.get("DT") or ""
-            rows.append({
-                "id": f"MR-{dt}-{i}",
-                "dt": f"{(r.get("date") or r.get("Дата") or dt)} 00:00",
-                "shift": r.get("Смена") or r.get("shift") or "",
-                "warehouse": "Шахта",
-                "product": _mining_product(r),
-                "qty": f"{qty}",
-                "unit": (r.get("unit") or "т"),
-                "source": "mining",
-                "doc": "Отчёт о добыче",
-                "note": r.get("Качество") or r.get("quality") or "",
-                "status": "pending",
-            })
-        return rows
-    except Exception:
-        return []
-
-
-def debug_counts(mining_url=None):
-    man, mfile, mhttp = 0, 0, 0
-    try:
+        # смена статусов для обычных строк
         _ensure_file()
         import csv
         with open(DATA_PATH, newline="", encoding="utf-8") as f:
-            man = sum(1 for _ in csv.DictReader(f))
+            rows = list(csv.DictReader(f))
+        ids_set=set(map(str,ids))
+        for r in rows:
+            if r.get("id") in ids_set and not str(r.get("id","")).startswith("MR-"):
+                r["status"] = "accepted" if op=="accept" else "canceled"
+        with open(DATA_PATH, "w", newline="", encoding="utf-8") as f:
+            w = DictWriter(f, fieldnames=FIELDS); w.writeheader()
+            for r in rows: w.writerow(r)
     except Exception:
-        man = -1
-    try:
-        mfile = len(_load_mining_csv())
-    except Exception:
-        mfile = -1
-    if mining_url:
-        try:
-            mhttp = len(load_mining_from_url(mining_url))
-        except Exception:
-            mhttp = -1
-    return {"manual": man, "mining_file": mfile, "mining_http": mhttp}
+        pass

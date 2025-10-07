@@ -1,0 +1,35 @@
+== DIAG for mine-mod-251004000019 ==
+
+BASE=https://mine-mod-251004000019-3be6d6bb714c.herokuapp.com/
+
+HEAD / -> 200
+HEAD /moves/ -> 200
+HEAD /mining-report/export.csv -> 200
+HEAD /cabinet/ -> 200
+HEAD /fgwh/ -> 200
+
+→ mining-report/export.csv (первые 5 строк):
+date,fraction,quality,plan_total,fact_s1,fact_s2,fact_s3,fact_s4,note,fact_total,unit
+
+== URL MAP (Heroku dyno) ==
+from wsgi import app
+print("{:<35} {:<12} {}".format("RULE","METHODS","ENDPOINT"))
+print("-"*72)
+with app.app_context():
+    for r in sorted(app.url_map.iter_rules(), key=lambda x: x.rule):
+        methods=",".join(sorted(m for m in r.methods if m not in ("HEAD","OPTIONS")))
+        print("{:<35} {:<12} {}".format(r.rule, methods, r.endpoint))
+Python 3.12.11 (main, Jun  3 2025, 20:54:11) [GCC 13.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> from wsgi import app
+fgwh register error: cannot import name 'fgwh_bp' from 'app.fgwh.routes' (/app/app/fgwh/routes.py)
+fgwh register error: 'NoneType' object has no attribute 'register'
+>>> print("{:<35} {:<12} {}".format("RULE","METHODS","ENDPOINT"))
+RULE                                METHODS      ENDPOINT
+>>> print("-"*72)
+------------------------------------------------------------------------
+>>> with app.app_context():
+...     for r in sorted(app.url_map.iter_rules(), key=lambda x: x.rule):
+...         methods=",".join(sorted(m for m in r.methods if m not in ("HEAD","OPTIONS")))
+...         print("{:<35} {:<12} {}".format(r.rule, methods, r.endpoint))
+... 
